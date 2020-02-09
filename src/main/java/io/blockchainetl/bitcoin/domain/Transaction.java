@@ -1,42 +1,51 @@
 package io.blockchainetl.bitcoin.domain;
 
-import com.google.common.base.Objects;
+
+import com.google.common.collect.Lists;
 import org.apache.avro.reflect.Nullable;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.joda.time.DateTime;
 
-import java.math.BigInteger;
+import java.io.Serializable;
 import java.util.List;
 
 @DefaultCoder(AvroCoder.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Transaction {
+public class Transaction implements Serializable {
+
+    @Nullable
+    private String created_date;
 
     @Nullable
     private String type;
-    
+
     @Nullable
     private String hash;
-    
+
+    @Nullable
+    @JsonProperty("transaction_id")
+    private String transactionId;
+
     @Nullable
     private Long size;
-    
+
     @Nullable
     @JsonProperty("virtual_size")
     private Long virtualSize;
-    
+
     @Nullable
     private Long version;
 
     @Nullable
     @JsonProperty("lock_time")
-    private String lockTime;
+    private Long lockTime;
 
     @Nullable
     @JsonProperty("block_number")
-    private Long blockNumber;
+    private Integer blockNumber;
 
     @Nullable
     @JsonProperty("block_hash")
@@ -51,6 +60,10 @@ public class Transaction {
     private Boolean isCoinbase;
 
     @Nullable
+    @JsonProperty("weight")
+    private Long weight;
+
+    @Nullable
     @JsonProperty("input_count")
     private Long inputCount;
 
@@ -60,14 +73,18 @@ public class Transaction {
 
     @Nullable
     @JsonProperty("input_value")
-    private BigInteger inputValue;
+    private Long inputValue;
 
     @Nullable
     @JsonProperty("output_value")
-    private BigInteger outputValue;
+    private Long outputValue;
 
     @Nullable
-    private BigInteger fee;
+    private Long fee;
+
+    @Nullable
+    @JsonProperty("coin_price_usd")
+    private Float coinPriceUSD;
 
     @Nullable
     private List<TransactionInput> inputs;
@@ -75,199 +92,320 @@ public class Transaction {
     @Nullable
     private List<TransactionOutput> outputs;
 
-    public Transaction() {}
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public Long getSize() {
-        return size;
-    }
-
-    public void setSize(Long size) {
-        this.size = size;
-    }
-
-    public Long getVirtualSize() {
-        return virtualSize;
-    }
-
-    public void setVirtualSize(Long virtualSize) {
-        this.virtualSize = virtualSize;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
-
-    public String getLockTime() {
-        return lockTime;
-    }
-
-    public void setLockTime(String lockTime) {
-        this.lockTime = lockTime;
-    }
-
-    public Long getBlockNumber() {
-        return blockNumber;
-    }
-
-    public void setBlockNumber(Long blockNumber) {
-        this.blockNumber = blockNumber;
-    }
-
-    public String getBlockHash() {
-        return blockHash;
-    }
-
-    public void setBlockHash(String blockHash) {
-        this.blockHash = blockHash;
-    }
-
-    public Long getBlockTimestamp() {
-        return blockTimestamp;
-    }
-
-    public void setBlockTimestamp(Long blockTimestamp) {
-        this.blockTimestamp = blockTimestamp;
-    }
-
-    public Boolean getCoinbase() {
-        return isCoinbase;
-    }
-
-    public void setCoinbase(Boolean coinbase) {
-        isCoinbase = coinbase;
-    }
-
-    public Long getInputCount() {
-        return inputCount;
-    }
-
-    public void setInputCount(Long inputCount) {
-        this.inputCount = inputCount;
-    }
-
-    public Long getOutputCount() {
-        return outputCount;
-    }
-
-    public void setOutputCount(Long outputCount) {
-        this.outputCount = outputCount;
-    }
-
-    public BigInteger getInputValue() {
-        return inputValue;
-    }
-
-    public void setInputValue(BigInteger inputValue) {
-        this.inputValue = inputValue;
-    }
-
-    public BigInteger getOutputValue() {
-        return outputValue;
-    }
-
-    public void setOutputValue(BigInteger outputValue) {
-        this.outputValue = outputValue;
-    }
-
-    public BigInteger getFee() {
-        return fee;
-    }
-
-    public void setFee(BigInteger fee) {
-        this.fee = fee;
+    public Transaction() {
     }
 
     public List<TransactionInput> getInputs() {
         return inputs;
     }
 
-    public void setInputs(List<TransactionInput> inputs) {
-        this.inputs = inputs;
+    public String getHash() {
+        return hash;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public Long getVirtualSize() {
+        return virtualSize;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public Long getLockTime() {
+        return lockTime;
+    }
+
+    public Integer getBlockNumber() {
+        return blockNumber;
+    }
+
+    public String getBlockHash() {
+        return blockHash;
+    }
+
+    public DateTime getBlockDateTime() {
+        return new DateTime(blockTimestamp * 1000);
+    }
+
+    public int getCoinbase() {
+        if (isCoinbase)
+            return 1;
+        else return 0;
+    }
+
+    public Long getInputCount() {
+        return inputCount;
+    }
+
+    public Long getOutputCount() {
+        return outputCount;
+    }
+
+    public Long getInputValue() {
+        return inputValue;
+    }
+
+    public Long getOutputValue() {
+        return outputValue;
+    }
+
+    public Long getFee() {
+        return fee;
+    }
+
+
+    public List<Long> getInputsValue() {
+        List<Long> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getValue() == null)
+                data.add(0L);
+            else
+                data.add(eachInput.getValue());
+        }
+
+        return data;
+    }
+
+    public List<String> getInputsType() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getType() == null)
+                data.add("");
+            else
+                data.add(eachInput.getType());
+        }
+
+        return data;
+    }
+
+    public List<Short> getInputsRequiredSignatures() {
+        List<Short> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getRequiredSignatures() == null)
+                data.add((short) 0);
+            else
+                data.add(eachInput.getRequiredSignatures().shortValue());
+        }
+
+        return data;
+    }
+
+    public List<Long> getInputsIndex() {
+        List<Long> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getIndex() == null)
+                data.add(0L);
+            else
+                data.add(eachInput.getIndex());
+        }
+
+        return data;
+    }
+
+    public List<String> getInputsCreateTransactionId() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getCreateTransactionId() == null)
+                data.add("");
+            else
+                data.add(eachInput.getCreateTransactionId());
+        }
+
+        return data;
+    }
+
+    public List<String> getInputsSpendingTransactionId() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getSpendingTransactionId() == null)
+                data.add("");
+            else
+                data.add(eachInput.getSpendingTransactionId());
+        }
+
+        return data;
+    }
+
+    public List<Long> getInputsCreateOutputIndex() {
+        List<Long> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getCreateOutputIndex() == null)
+                data.add(0L);
+            else
+                data.add(eachInput.getCreateOutputIndex());
+        }
+
+        return data;
+    }
+
+    public List<String> getInputsScriptAsm() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getScriptAsm() == null)
+                data.add("");
+            else
+                data.add(eachInput.getScriptAsm());
+        }
+
+        return data;
+    }
+
+    public List<String> getInputsScriptHex() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getScriptHex() == null)
+                data.add("");
+            else
+                data.add(eachInput.getScriptHex());
+        }
+
+        return data;
+    }
+
+    public List<String> getInputsAddress() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getAddresses() == null)
+                data.add("");
+            else
+                data.add(eachInput.getAddresses());
+        }
+
+        return data;
+    }
+
+    public List<Long> getOutputsValue() {
+        List<Long> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getValue() == null)
+                data.add(0L);
+            else
+                data.add(eachOutput.getValue());
+        }
+
+        return data;
+    }
+
+    public List<String> getOutputsType() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getType() == null)
+                data.add("");
+            else
+                data.add(eachOutput.getType());
+        }
+
+        return data;
+    }
+
+
+    public List<Short> getOutputsRequiredSignatures() {
+        List<Short> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getRequiredSignatures() == null)
+                data.add((short) 0);
+            else
+                data.add(eachOutput.getRequiredSignatures().shortValue());
+        }
+
+        return data;
+    }
+
+    public List<String> getOutputsCreateTransactionId() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getCreateTransactionId() == null)
+                data.add("");
+            else
+                data.add(eachOutput.getCreateTransactionId());
+        }
+
+        return data;
+    }
+
+    public List<Long> getOutputsIndex() {
+        List<Long> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getIndex() == null)
+                data.add(0L);
+            else
+                data.add(eachOutput.getIndex());
+        }
+
+        return data;
+    }
+
+    public List<String> getOutputsScriptAsm() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getScriptAsm() == null)
+                data.add("");
+            else
+                data.add(eachOutput.getScriptAsm());
+        }
+
+        return data;
+    }
+
+    public List<String> getOutputsScriptHex() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getScriptHex() == null)
+                data.add("");
+            else
+                data.add(eachOutput.getScriptHex());
+        }
+
+        return data;
+    }
+
+    public List<String> getOutputsAddress() {
+        List<String> data = Lists.newArrayList();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getAddresses() == null)
+                data.add("");
+            else
+                data.add(eachOutput.getAddresses());
+        }
+
+        return data;
     }
 
     public List<TransactionOutput> getOutputs() {
         return outputs;
     }
 
-    public void setOutputs(List<TransactionOutput> outputs) {
-        this.outputs = outputs;
+    public String getTransactionId() {
+        return transactionId;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Transaction that = (Transaction) o;
-        return Objects.equal(type, that.type) &&
-            Objects.equal(hash, that.hash) &&
-            Objects.equal(size, that.size) &&
-            Objects.equal(virtualSize, that.virtualSize) &&
-            Objects.equal(version, that.version) &&
-            Objects.equal(lockTime, that.lockTime) &&
-            Objects.equal(blockNumber, that.blockNumber) &&
-            Objects.equal(blockHash, that.blockHash) &&
-            Objects.equal(blockTimestamp, that.blockTimestamp) &&
-            Objects.equal(isCoinbase, that.isCoinbase) &&
-            Objects.equal(inputCount, that.inputCount) &&
-            Objects.equal(outputCount, that.outputCount) &&
-            Objects.equal(inputValue, that.inputValue) &&
-            Objects.equal(outputValue, that.outputValue) &&
-            Objects.equal(fee, that.fee) &&
-            Objects.equal(inputs, that.inputs) &&
-            Objects.equal(outputs, that.outputs);
+    public Long getWeight() {
+        return weight;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(type, hash, size, virtualSize, version, lockTime, blockNumber, blockHash,
-            blockTimestamp,
-            isCoinbase, inputCount, outputCount, inputValue, outputValue, fee, inputs, outputs);
-    }
-
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-            .add("type", type)
-            .add("hash", hash)
-            .add("size", size)
-            .add("virtualSize", virtualSize)
-            .add("version", version)
-            .add("lockTime", lockTime)
-            .add("blockNumber", blockNumber)
-            .add("blockHash", blockHash)
-            .add("blockTimestamp", blockTimestamp)
-            .add("isCoinbase", isCoinbase)
-            .add("inputCount", inputCount)
-            .add("outputCount", outputCount)
-            .add("inputValue", inputValue)
-            .add("outputValue", outputValue)
-            .add("fee", fee)
-            .add("inputs", inputs)
-            .add("outputs", outputs)
-            .toString();
+    public Float getCoinPriceUSD() {
+        return coinPriceUSD;
     }
 }

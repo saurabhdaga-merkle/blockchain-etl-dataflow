@@ -6,6 +6,7 @@ import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.joda.time.DateTime;
 
 import java.math.BigInteger;
 
@@ -15,7 +16,7 @@ public class Transaction {
 
     @Nullable
     private String type;
-    
+
     @Nullable
     private String hash;
 
@@ -39,7 +40,7 @@ public class Transaction {
 
     @Nullable
     private Long gas;
-    
+
     @Nullable
     @JsonProperty("gas_price")
     private Long gasPrice;
@@ -66,7 +67,7 @@ public class Transaction {
     @Nullable
     @JsonProperty("receipt_status")
     private Long receiptStatus;
-    
+
     @Nullable
     @JsonProperty("block_number")
     private Long blockNumber;
@@ -78,8 +79,9 @@ public class Transaction {
     @Nullable
     @JsonProperty("block_timestamp")
     private Long blockTimestamp;
-    
-    public Transaction() {}
+
+    public Transaction() {
+    }
 
     public String getType() {
         return type;
@@ -217,8 +219,8 @@ public class Transaction {
         this.blockHash = blockHash;
     }
 
-    public Long getBlockTimestamp() {
-        return blockTimestamp;
+    public DateTime getBlockTimestamp() {
+        return new DateTime(blockTimestamp * 1000);
     }
 
     public void setBlockTimestamp(Long blockTimestamp) {
@@ -235,54 +237,54 @@ public class Transaction {
         }
         Transaction that = (Transaction) o;
         return Objects.equal(type, that.type) &&
-            Objects.equal(hash, that.hash) &&
-            Objects.equal(nonce, that.nonce) &&
-            Objects.equal(transactionIndex, that.transactionIndex) &&
-            Objects.equal(fromAddress, that.fromAddress) &&
-            Objects.equal(toAddress, that.toAddress) &&
-            Objects.equal(value, that.value) &&
-            Objects.equal(gas, that.gas) &&
-            Objects.equal(gasPrice, that.gasPrice) &&
-            Objects.equal(input, that.input) &&
-            Objects.equal(receiptCumulativeGasUsed, that.receiptCumulativeGasUsed) &&
-            Objects.equal(receiptGasUsed, that.receiptGasUsed) &&
-            Objects.equal(receiptContractAddress, that.receiptContractAddress) &&
-            Objects.equal(receiptRoot, that.receiptRoot) &&
-            Objects.equal(receiptStatus, that.receiptStatus) &&
-            Objects.equal(blockNumber, that.blockNumber) &&
-            Objects.equal(blockHash, that.blockHash) &&
-            Objects.equal(blockTimestamp, that.blockTimestamp);
+                Objects.equal(hash, that.hash) &&
+                Objects.equal(nonce, that.nonce) &&
+                Objects.equal(transactionIndex, that.transactionIndex) &&
+                Objects.equal(fromAddress, that.fromAddress) &&
+                Objects.equal(toAddress, that.toAddress) &&
+                Objects.equal(value, that.value) &&
+                Objects.equal(gas, that.gas) &&
+                Objects.equal(gasPrice, that.gasPrice) &&
+                Objects.equal(input, that.input) &&
+                Objects.equal(receiptCumulativeGasUsed, that.receiptCumulativeGasUsed) &&
+                Objects.equal(receiptGasUsed, that.receiptGasUsed) &&
+                Objects.equal(receiptContractAddress, that.receiptContractAddress) &&
+                Objects.equal(receiptRoot, that.receiptRoot) &&
+                Objects.equal(receiptStatus, that.receiptStatus) &&
+                Objects.equal(blockNumber, that.blockNumber) &&
+                Objects.equal(blockHash, that.blockHash) &&
+                Objects.equal(blockTimestamp, that.blockTimestamp);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(type, hash, nonce, transactionIndex, fromAddress, toAddress, value, gas, gasPrice,
-            input,
-            receiptCumulativeGasUsed, receiptGasUsed, receiptContractAddress, receiptRoot, receiptStatus, blockNumber,
-            blockHash, blockTimestamp);
+                input,
+                receiptCumulativeGasUsed, receiptGasUsed, receiptContractAddress, receiptRoot, receiptStatus, blockNumber,
+                blockHash, blockTimestamp);
     }
 
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-            .add("type", type)
-            .add("hash", hash)
-            .add("nonce", nonce)
-            .add("transactionIndex", transactionIndex)
-            .add("fromAddress", fromAddress)
-            .add("toAddress", toAddress)
-            .add("value", value)
-            .add("gas", gas)
-            .add("gasPrice", gasPrice)
-            .add("input", input)
-            .add("receiptCumulativeGasUsed", receiptCumulativeGasUsed)
-            .add("receiptGasUsed", receiptGasUsed)
-            .add("receiptContractAddress", receiptContractAddress)
-            .add("receiptRoot", receiptRoot)
-            .add("receiptStatus", receiptStatus)
-            .add("blockNumber", blockNumber)
-            .add("blockHash", blockHash)
-            .add("blockTimestamp", blockTimestamp)
-            .toString();
+                .add("type", type)
+                .add("hash", hash)
+                .add("nonce", nonce)
+                .add("transactionIndex", transactionIndex)
+                .add("fromAddress", fromAddress)
+                .add("toAddress", toAddress)
+                .add("value", value)
+                .add("gas", gas)
+                .add("gasPrice", gasPrice)
+                .add("input", input)
+                .add("receiptCumulativeGasUsed", receiptCumulativeGasUsed)
+                .add("receiptGasUsed", receiptGasUsed)
+                .add("receiptContractAddress", receiptContractAddress)
+                .add("receiptRoot", receiptRoot)
+                .add("receiptStatus", receiptStatus)
+                .add("blockNumber", blockNumber)
+                .add("blockHash", blockHash)
+                .add("blockTimestamp", blockTimestamp)
+                .toString();
     }
 }

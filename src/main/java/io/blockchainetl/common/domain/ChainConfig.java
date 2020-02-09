@@ -1,41 +1,50 @@
 package io.blockchainetl.common.domain;
 
+import io.blockchainetl.common.utils.FileUtils;
+import io.blockchainetl.common.utils.JsonUtils;
+import org.codehaus.jackson.type.TypeReference;
+
+import java.nio.charset.Charset;
+
 public class ChainConfig {
-    
+
     private String transformNamePrefix;
     private String pubSubSubscriptionPrefix;
-    private String bigQueryDataset;
+    private String clickhouseDatabase;
+    private String transactionsTable;
+    private String blocksTable;
+    private String clickhouseJDBCURI;
     private String startTimestamp;
+
+    public static ChainConfig readChainConfig(String file) {
+        String fileContents = FileUtils.readFile(file, Charset.forName("UTF-8"));
+        ChainConfig result = JsonUtils.parseJson(fileContents, new TypeReference<ChainConfig>() {
+        });
+        return result;
+    }
 
     public String getTransformNamePrefix() {
         return transformNamePrefix;
-    }
-
-    public void setTransformNamePrefix(String transformNamePrefix) {
-        this.transformNamePrefix = transformNamePrefix;
     }
 
     public String getPubSubSubscriptionPrefix() {
         return pubSubSubscriptionPrefix;
     }
 
-    public void setPubSubSubscriptionPrefix(String pubSubSubscriptionPrefix) {
-        this.pubSubSubscriptionPrefix = pubSubSubscriptionPrefix;
-    }
-
-    public String getBigQueryDataset() {
-        return bigQueryDataset;
-    }
-
-    public void setBigQueryDataset(String bigQueryDataset) {
-        this.bigQueryDataset = bigQueryDataset;
-    }
-
     public String getStartTimestamp() {
         return startTimestamp;
     }
 
-    public void setStartTimestamp(String startTimestamp) {
-        this.startTimestamp = startTimestamp;
+    public String getTransactionsTable() {
+        return transactionsTable;
     }
+
+    public String getClickhouseJDBCURI() {
+        return clickhouseJDBCURI;
+    }
+
+    public String getBlocksTable() {
+        return blocksTable;
+    }
+
 }

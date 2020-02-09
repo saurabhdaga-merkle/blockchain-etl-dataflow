@@ -16,7 +16,7 @@ public class TokenTransfer {
     @Nullable
     @JsonProperty("token_address")
     private String tokenAddress;
-    
+
     @Nullable
     @JsonProperty("from_address")
     private String fromAddress;
@@ -47,8 +47,9 @@ public class TokenTransfer {
     @Nullable
     @JsonProperty("block_hash")
     private String blockHash;
-    
-    public TokenTransfer() {}
+
+    public TokenTransfer() {
+    }
 
     public String getTokenAddress() {
         return tokenAddress;
@@ -132,34 +133,34 @@ public class TokenTransfer {
         }
         TokenTransfer that = (TokenTransfer) o;
         return Objects.equal(tokenAddress, that.tokenAddress) &&
-            Objects.equal(fromAddress, that.fromAddress) &&
-            Objects.equal(toAddress, that.toAddress) &&
-            Objects.equal(value, that.value) &&
-            Objects.equal(transactionHash, that.transactionHash) &&
-            Objects.equal(logIndex, that.logIndex) &&
-            Objects.equal(blockTimestamp, that.blockTimestamp) &&
-            Objects.equal(blockNumber, that.blockNumber) &&
-            Objects.equal(blockHash, that.blockHash);
+                Objects.equal(fromAddress, that.fromAddress) &&
+                Objects.equal(toAddress, that.toAddress) &&
+                Objects.equal(value, that.value) &&
+                Objects.equal(transactionHash, that.transactionHash) &&
+                Objects.equal(logIndex, that.logIndex) &&
+                Objects.equal(blockTimestamp, that.blockTimestamp) &&
+                Objects.equal(blockNumber, that.blockNumber) &&
+                Objects.equal(blockHash, that.blockHash);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(tokenAddress, fromAddress, toAddress, value, transactionHash, logIndex, blockTimestamp,
-            blockNumber, blockHash);
+                blockNumber, blockHash);
     }
 
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-            .add("tokenAddress", tokenAddress)
-            .add("fromAddress", fromAddress)
-            .add("toAddress", toAddress)
-            .add("value", value)
-            .add("transactionHash", transactionHash)
-            .add("logIndex", logIndex)
-            .add("blockTimestamp", blockTimestamp)
-            .add("blockNumber", blockNumber)
-            .add("blockHash", blockHash)
-            .toString();
+                .add("tokenAddress", tokenAddress)
+                .add("fromAddress", fromAddress)
+                .add("toAddress", toAddress)
+                .add("value", value)
+                .add("transactionHash", transactionHash)
+                .add("logIndex", logIndex)
+                .add("blockTimestamp", blockTimestamp)
+                .add("blockNumber", blockNumber)
+                .add("blockHash", blockHash)
+                .toString();
     }
 }

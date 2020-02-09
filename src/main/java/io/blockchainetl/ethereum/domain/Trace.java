@@ -82,8 +82,9 @@ public class Trace {
     @Nullable
     @JsonProperty("block_hash")
     private String blockHash;
-    
-    public Trace() {}
+
+    public Trace() {
+    }
 
     public String getTransactionHash() {
         return transactionHash;
@@ -247,56 +248,56 @@ public class Trace {
         }
         Trace trace = (Trace) o;
         return Objects.equal(transactionHash, trace.transactionHash) &&
-            Objects.equal(transactionIndex, trace.transactionIndex) &&
-            Objects.equal(fromAddress, trace.fromAddress) &&
-            Objects.equal(toAddress, trace.toAddress) &&
-            Objects.equal(value, trace.value) &&
-            Objects.equal(input, trace.input) &&
-            Objects.equal(output, trace.output) &&
-            Objects.equal(traceType, trace.traceType) &&
-            Objects.equal(callType, trace.callType) &&
-            Objects.equal(rewardType, trace.rewardType) &&
-            Objects.equal(gas, trace.gas) &&
-            Objects.equal(gasUsed, trace.gasUsed) &&
-            Objects.equal(subtraces, trace.subtraces) &&
-            Objects.equal(traceAddress, trace.traceAddress) &&
-            Objects.equal(error, trace.error) &&
-            Objects.equal(status, trace.status) &&
-            Objects.equal(blockTimestamp, trace.blockTimestamp) &&
-            Objects.equal(blockNumber, trace.blockNumber) &&
-            Objects.equal(blockHash, trace.blockHash);
+                Objects.equal(transactionIndex, trace.transactionIndex) &&
+                Objects.equal(fromAddress, trace.fromAddress) &&
+                Objects.equal(toAddress, trace.toAddress) &&
+                Objects.equal(value, trace.value) &&
+                Objects.equal(input, trace.input) &&
+                Objects.equal(output, trace.output) &&
+                Objects.equal(traceType, trace.traceType) &&
+                Objects.equal(callType, trace.callType) &&
+                Objects.equal(rewardType, trace.rewardType) &&
+                Objects.equal(gas, trace.gas) &&
+                Objects.equal(gasUsed, trace.gasUsed) &&
+                Objects.equal(subtraces, trace.subtraces) &&
+                Objects.equal(traceAddress, trace.traceAddress) &&
+                Objects.equal(error, trace.error) &&
+                Objects.equal(status, trace.status) &&
+                Objects.equal(blockTimestamp, trace.blockTimestamp) &&
+                Objects.equal(blockNumber, trace.blockNumber) &&
+                Objects.equal(blockHash, trace.blockHash);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(transactionHash, transactionIndex, fromAddress, toAddress, value, input, output,
-            traceType,
-            callType, rewardType, gas, gasUsed, subtraces, traceAddress, error, status, blockTimestamp, blockNumber,
-            blockHash);
+                traceType,
+                callType, rewardType, gas, gasUsed, subtraces, traceAddress, error, status, blockTimestamp, blockNumber,
+                blockHash);
     }
 
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-            .add("transactionHash", transactionHash)
-            .add("transactionIndex", transactionIndex)
-            .add("fromAddress", fromAddress)
-            .add("toAddress", toAddress)
-            .add("value", value)
-            .add("input", input)
-            .add("output", output)
-            .add("traceType", traceType)
-            .add("callType", callType)
-            .add("rewardType", rewardType)
-            .add("gas", gas)
-            .add("gasUsed", gasUsed)
-            .add("subtraces", subtraces)
-            .add("traceAddress", traceAddress)
-            .add("error", error)
-            .add("status", status)
-            .add("blockTimestamp", blockTimestamp)
-            .add("blockNumber", blockNumber)
-            .add("blockHash", blockHash)
-            .toString();
+                .add("transactionHash", transactionHash)
+                .add("transactionIndex", transactionIndex)
+                .add("fromAddress", fromAddress)
+                .add("toAddress", toAddress)
+                .add("value", value)
+                .add("input", input)
+                .add("output", output)
+                .add("traceType", traceType)
+                .add("callType", callType)
+                .add("rewardType", rewardType)
+                .add("gas", gas)
+                .add("gasUsed", gasUsed)
+                .add("subtraces", subtraces)
+                .add("traceAddress", traceAddress)
+                .add("error", error)
+                .add("status", status)
+                .add("blockTimestamp", blockTimestamp)
+                .add("blockNumber", blockNumber)
+                .add("blockHash", blockHash)
+                .toString();
     }
 }
