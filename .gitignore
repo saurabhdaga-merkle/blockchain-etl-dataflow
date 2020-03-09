@@ -12,4 +12,4 @@ airflow.db
 psql/
 dump.rdb
 .mvn/*
-target/
+target/*
