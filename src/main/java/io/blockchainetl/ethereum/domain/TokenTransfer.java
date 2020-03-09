@@ -6,6 +6,7 @@ import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.joda.time.DateTime;
 
 import java.math.BigInteger;
 
@@ -34,7 +35,7 @@ public class TokenTransfer {
 
     @Nullable
     @JsonProperty("log_index")
-    private Long logIndex;
+    private Integer logIndex;
 
     @Nullable
     @JsonProperty("block_timestamp")
@@ -55,72 +56,35 @@ public class TokenTransfer {
         return tokenAddress;
     }
 
-    public void setTokenAddress(String tokenAddress) {
-        this.tokenAddress = tokenAddress;
-    }
-
-    public String getFromAddress() {
-        return fromAddress;
-    }
-
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
-    }
-
-    public String getToAddress() {
-        return toAddress;
-    }
-
-    public void setToAddress(String toAddress) {
-        this.toAddress = toAddress;
-    }
-
-    public BigInteger getValue() {
-        return value;
-    }
-
-    public void setValue(BigInteger value) {
-        this.value = value;
-    }
 
     public String getTransactionHash() {
+        if (transactionHash == null)
+            return "0x";
         return transactionHash;
     }
 
-    public void setTransactionHash(String transactionHash) {
-        this.transactionHash = transactionHash;
+    public String getFromAddress() {
+        if (fromAddress == null)
+            return "0x";
+        return fromAddress;
     }
 
-    public Long getLogIndex() {
+    public String getToAddress() {
+        if (toAddress == null)
+            return "0x";
+        return toAddress;
+    }
+
+    public String getValue() {
+        return value.toString();
+    }
+
+    public Integer getLogIndex() {
         return logIndex;
     }
 
-    public void setLogIndex(Long logIndex) {
-        this.logIndex = logIndex;
-    }
-
-    public Long getBlockTimestamp() {
-        return blockTimestamp;
-    }
-
-    public void setBlockTimestamp(Long blockTimestamp) {
-        this.blockTimestamp = blockTimestamp;
-    }
-
-    public Long getBlockNumber() {
-        return blockNumber;
-    }
-
-    public void setBlockNumber(Long blockNumber) {
-        this.blockNumber = blockNumber;
-    }
-
-    public String getBlockHash() {
-        return blockHash;
-    }
-
-    public void setBlockHash(String blockHash) {
-        this.blockHash = blockHash;
+    public DateTime getBlockDateTime() {
+        return new DateTime(blockTimestamp * 1000);
     }
 
     @Override

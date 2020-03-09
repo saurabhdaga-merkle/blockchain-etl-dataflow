@@ -1,8 +1,8 @@
 {
   "transformNamePrefix": "Ethereum",
-  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_erthereum.dataflow.clickhouse.",
-  "transactionsTable": "master_streaming",
+  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_ethereum.dataflow.clickhouse.",
+  "transactionsTable": "ethereum_daily",
   "blocksTable": "",
-  "clickhouseJDBCURI": "jdbc:clickhouse://35.202.46.77:8123/ethereum?password=mscience123",
+  "clickhouseJDBCURI": "jdbc:clickhouse://35.202.46.77:8123/streaming?password=mscience123",
   "startTimestamp": "2019-03-02T00:00:00Z"
 }

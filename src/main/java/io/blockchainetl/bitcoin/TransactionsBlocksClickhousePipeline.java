@@ -83,10 +83,10 @@ public class TransactionsBlocksClickhousePipeline {
                 ClickHouseIO.<Row>write(
                         chainConfig.getClickhouseJDBCURI(),
                         chainConfig.getBlocksTable())
-                        .withMaxRetries(3)
-                        .withMaxInsertBlockSize(1000)
+                        .withMaxRetries(10)
+                        .withMaxInsertBlockSize(10000)
                         .withInitialBackoff(Duration.standardSeconds(5))
-                        .withInsertDeduplicate(true)
+                        .withInsertDeduplicate(false)
                         .withInsertDistributedSync(false));
     }
 
@@ -151,9 +151,9 @@ public class TransactionsBlocksClickhousePipeline {
                         chainConfig.getClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
                         .withMaxRetries(10)
-                        .withMaxInsertBlockSize(50)
-                        .withInitialBackoff(Duration.standardSeconds(15))
-                        .withInsertDeduplicate(true)
+                        .withMaxInsertBlockSize(100000)
+                        .withInitialBackoff(Duration.standardSeconds(5))
+                        .withInsertDeduplicate(false)
                         .withInsertDistributedSync(false));
     }
 }

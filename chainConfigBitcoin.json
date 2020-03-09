@@ -1,8 +1,8 @@
 {
   "transformNamePrefix": "Bitcoin",
   "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_bitcoin.dataflow.clickhouse.",
-  "transactionsTable": "transactions_streaming",
+  "transactionsTable": "bitcoin_transactions_daily",
   "blocksTable": "blocks_streaming",
-  "clickhouseJDBCURI": "jdbc:clickhouse://35.202.46.77:8123/bitcoin?password=mscience123",
+  "clickhouseJDBCURI": "jdbc:clickhouse://35.202.46.77:8123/streaming?password=mscience123",
   "startTimestamp": "2019-03-02T00:00:00Z"
 }

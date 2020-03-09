@@ -83,56 +83,27 @@ public class Transaction {
     public Transaction() {
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public String getHash() {
+        if (hash == null)
+            return "0x";
         return hash;
     }
 
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public String getNonce() {
-        return nonce;
-    }
-
-    public void setNonce(String nonce) {
-        this.nonce = nonce;
-    }
-
-    public Long getTransactionIndex() {
-        return transactionIndex;
-    }
-
-    public void setTransactionIndex(Long transactionIndex) {
-        this.transactionIndex = transactionIndex;
-    }
 
     public String getFromAddress() {
+        if (fromAddress == null)
+            return "0x";
         return fromAddress;
     }
 
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
-    }
-
     public String getToAddress() {
+        if (toAddress == null)
+            return "0x";
         return toAddress;
     }
 
-    public void setToAddress(String toAddress) {
-        this.toAddress = toAddress;
-    }
-
-    public BigInteger getValue() {
-        return value;
+    public String getValue() {
+        return value.toString();
     }
 
     public void setValue(BigInteger value) {
@@ -219,7 +190,7 @@ public class Transaction {
         this.blockHash = blockHash;
     }
 
-    public DateTime getBlockTimestamp() {
+    public DateTime getBlockDateTime() {
         return new DateTime(blockTimestamp * 1000);
     }
 

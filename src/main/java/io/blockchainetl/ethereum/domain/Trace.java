@@ -6,6 +6,7 @@ import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.joda.time.DateTime;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -69,7 +70,7 @@ public class Trace {
     private String error;
 
     @Nullable
-    private Long status;
+    private Integer status;
 
     @Nullable
     @JsonProperty("block_timestamp")
@@ -87,156 +88,45 @@ public class Trace {
     }
 
     public String getTransactionHash() {
+        if (transactionHash == null)
+            return "0x";
         return transactionHash;
     }
 
-    public void setTransactionHash(String transactionHash) {
-        this.transactionHash = transactionHash;
-    }
-
-    public Long getTransactionIndex() {
-        return transactionIndex;
-    }
-
-    public void setTransactionIndex(Long transactionIndex) {
-        this.transactionIndex = transactionIndex;
-    }
-
     public String getFromAddress() {
+        if (fromAddress == null)
+            return "0x";
         return fromAddress;
     }
 
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
-    }
-
     public String getToAddress() {
+        if (toAddress == null)
+            return "0x";
         return toAddress;
     }
 
-    public void setToAddress(String toAddress) {
-        this.toAddress = toAddress;
-    }
-
-    public BigInteger getValue() {
-        return value;
-    }
-
-    public void setValue(BigInteger value) {
-        this.value = value;
-    }
-
-    public String getInput() {
-        return input;
-    }
-
-    public void setInput(String input) {
-        this.input = input;
-    }
-
-    public String getOutput() {
-        return output;
-    }
-
-    public void setOutput(String output) {
-        this.output = output;
-    }
-
-    public String getTraceType() {
-        return traceType;
-    }
-
-    public void setTraceType(String traceType) {
-        this.traceType = traceType;
-    }
-
-    public String getCallType() {
-        return callType;
-    }
-
-    public void setCallType(String callType) {
-        this.callType = callType;
-    }
-
-    public String getRewardType() {
-        return rewardType;
-    }
-
-    public void setRewardType(String rewardType) {
-        this.rewardType = rewardType;
+    public String getValue() {
+        return value.toString();
     }
 
     public Long getGas() {
+        if (gas == null)
+            return 0L;
         return gas;
     }
 
-    public void setGas(Long gas) {
-        this.gas = gas;
-    }
-
-    public Long getGasUsed() {
-        return gasUsed;
-    }
-
-    public void setGasUsed(Long gasUsed) {
-        this.gasUsed = gasUsed;
-    }
-
-    public Long getSubtraces() {
-        return subtraces;
-    }
-
-    public void setSubtraces(Long subtraces) {
-        this.subtraces = subtraces;
-    }
-
-    public List<Long> getTraceAddress() {
-        return traceAddress;
-    }
-
-    public void setTraceAddress(List<Long> traceAddress) {
-        this.traceAddress = traceAddress;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
-    public Long getStatus() {
+    public int getStatus() {
         return status;
     }
 
-    public void setStatus(Long status) {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 
-    public Long getBlockTimestamp() {
-        return blockTimestamp;
+    public DateTime getBlockDateTime() {
+        return new DateTime(blockTimestamp * 1000);
     }
 
-    public void setBlockTimestamp(Long blockTimestamp) {
-        this.blockTimestamp = blockTimestamp;
-    }
-
-    public Long getBlockNumber() {
-        return blockNumber;
-    }
-
-    public void setBlockNumber(Long blockNumber) {
-        this.blockNumber = blockNumber;
-    }
-
-    public String getBlockHash() {
-        return blockHash;
-    }
-
-    public void setBlockHash(String blockHash) {
-        this.blockHash = blockHash;
-    }
 
     @Override
     public boolean equals(Object o) {
