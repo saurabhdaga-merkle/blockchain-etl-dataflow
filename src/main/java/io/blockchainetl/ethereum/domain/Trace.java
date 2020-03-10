@@ -76,6 +76,7 @@ public class Trace {
     @JsonProperty("block_timestamp")
     private Long blockTimestamp;
 
+
     @Nullable
     @JsonProperty("block_number")
     private Long blockNumber;
@@ -114,6 +115,11 @@ public class Trace {
             return 0L;
         return gas;
     }
+
+    public Long getBlockNumber() {
+        return blockNumber;
+    }
+
 
     public int getStatus() {
         return status;

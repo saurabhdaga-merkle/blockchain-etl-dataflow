@@ -86,6 +86,11 @@ public class TokenTransfer {
     public DateTime getBlockDateTime() {
         return new DateTime(blockTimestamp * 1000);
     }
+    
+    public Long getBlockNumber() {
+        return blockNumber;
+    }
+
 
     @Override
     public boolean equals(Object o) {

@@ -25,6 +25,7 @@ public final class Schemas {
             Schema.Field.of("value", Schema.FieldType.STRING),
             Schema.Field.of("token_address", Schema.FieldType.STRING),
             Schema.Field.of("block_date_time", Schema.FieldType.DATETIME),
+            Schema.Field.of("block_number", Schema.FieldType.INT64),
             Schema.Field.of("fee", Schema.FieldType.STRING),
             Schema.Field.of("gas", Schema.FieldType.INT64),
             Schema.Field.of("log_index", Schema.FieldType.INT32),
