@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class TransactionsTracesTokensClickhousePipeline {
+public class TransactionsTracesTokensHotClickhousePipeline {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionsTracesTokensClickhousePipeline.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionsTracesTokensHotClickhousePipeline.class);
 
     private static final String PUBSUB_ID_ATTRIBUTE = "item_id";
 
@@ -49,11 +49,11 @@ public class TransactionsTracesTokensClickhousePipeline {
         tokenTransfers.apply(transformNameSuffix + "ReadFromPubSub",
                 PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "token_transfers").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
-                    @DoFn.ProcessElement
+                    @ProcessElement
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         TokenTransfer tokenTransfer = JsonUtils.parseJson(item, TokenTransfer.class);
-                        c.output(Row.withSchema(Schemas.MASTER)
+                        c.output(Row.withSchema(Schemas.MASTER_HOT)
                                 .addValues(tokenTransfer.getTransactionHash(),
                                         tokenTransfer.getFromAddress(),
                                         tokenTransfer.getToAddress(),
@@ -66,10 +66,11 @@ public class TransactionsTracesTokensClickhousePipeline {
                                         0L,
                                         tokenTransfer.getLogIndex(),
                                         (short) 1,
-                                        UUID.randomUUID().toString()).build());
+                                        UUID.randomUUID().toString(),
+                                        (byte) 1).build());
                     }
 
-                })).setRowSchema(Schemas.MASTER).apply(
+                })).setRowSchema(Schemas.MASTER_HOT).apply(
                 ClickHouseIO.<Row>write(
                         chainConfig.getClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
@@ -88,12 +89,12 @@ public class TransactionsTracesTokensClickhousePipeline {
         traces.apply(transformNameSuffix + "ReadFromPubSub",
                 PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "traces").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
-                    @DoFn.ProcessElement
+                    @ProcessElement
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         Trace traces = JsonUtils.parseJson(item, Trace.class);
                         System.out.println(traces.getFromAddress());
-                        c.output(Row.withSchema(Schemas.MASTER)
+                        c.output(Row.withSchema(Schemas.MASTER_HOT)
                                 .addValues(traces.getTransactionHash(),
                                         traces.getFromAddress(),
                                         traces.getToAddress(),
@@ -106,10 +107,11 @@ public class TransactionsTracesTokensClickhousePipeline {
                                         traces.getGas(),
                                         0,
                                         (short) traces.getStatus(),
-                                        UUID.randomUUID().toString()).build());
+                                        UUID.randomUUID().toString(),
+                        (byte) 1).build());
                     }
 
-                })).setRowSchema(Schemas.MASTER).apply(
+                })).setRowSchema(Schemas.MASTER_HOT).apply(
                 ClickHouseIO.<Row>write(
                         chainConfig.getClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
@@ -126,11 +128,11 @@ public class TransactionsTracesTokensClickhousePipeline {
         p.apply(transformNameSuffix + "ReadFromPubSub",
                 PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "transactions").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
-                    @DoFn.ProcessElement
+                    @ProcessElement
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         Transaction transaction = JsonUtils.parseJson(item, Transaction.class);
-                        c.output(Row.withSchema(Schemas.MASTER)
+                        c.output(Row.withSchema(Schemas.MASTER_HOT)
                                 .addValues(
                                         transaction.getHash(),
                                         transaction.getFromAddress(),
@@ -144,10 +146,11 @@ public class TransactionsTracesTokensClickhousePipeline {
                                         transaction.getGas(),
                                         0,
                                         (short) 1,
-                                        UUID.randomUUID().toString()).build());
+                                        UUID.randomUUID().toString(),
+                                        (byte) 1).build());
                     }
 
-                })).setRowSchema(Schemas.MASTER).apply(
+                })).setRowSchema(Schemas.MASTER_HOT).apply(
                 ClickHouseIO.<Row>write(
                         chainConfig.getClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())

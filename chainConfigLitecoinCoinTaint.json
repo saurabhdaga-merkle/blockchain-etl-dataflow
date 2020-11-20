@@ -1,0 +1,8 @@
+{
+  "transformNamePrefix": "Litecoin",
+  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_litecoin_cointaint.dataflow.clickhouse.",
+  "transactionsTable": "litecoin_transactions_daily",
+  "blocksTable": "litecoin_blocks_streaming",
+  "clickhouseJDBCURI": "jdbc:clickhouse://34.66.15.18:8123/streaming?password=mscience123",
+  "startTimestamp": "2019-03-02T00:00:00Z"
+}

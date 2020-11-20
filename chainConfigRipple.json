@@ -1,0 +1,8 @@
+{
+  "transformNamePrefix": "Ripple",
+  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_ripple.dataflow.clickhouse.",
+  "transactionsTable": "ripple_payments_daily",
+  "blocksTable": "",
+  "clickhouseJDBCURI": "jdbc:clickhouse://35.202.46.77:8123/streaming?password=mscience123",
+  "startTimestamp": "2020-08-02T00:00:00Z"
+}

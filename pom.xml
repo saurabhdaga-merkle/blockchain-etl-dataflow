@@ -46,6 +46,7 @@
         <hadoop.version>2.7.3</hadoop.version>
         <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
         <nemo.version>0.1</nemo.version>
+        <kafka.clients.version>1.0.0</kafka.clients.version>
     </properties>
 
     <repositories>
@@ -179,6 +180,11 @@
                     <version>${beam.version}</version>
                     <scope>runtime</scope>
                 </dependency>
+                <dependency>
+                    <groupId>org.apache.beam</groupId>
+                    <artifactId>beam-sdks-java-io-kafka</artifactId>
+                    <version>${beam.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -214,6 +220,18 @@
             <groupId>ru.yandex.clickhouse</groupId>
             <artifactId>clickhouse-jdbc</artifactId>
             <version>0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.beam</groupId>
+            <artifactId>beam-sdks-java-io-kafka</artifactId>
+            <version>${beam.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.clients.version}</version>
         </dependency>
 
         <!-- Dependencies below this line are specific dependencies needed by the examples code. -->

@@ -15,6 +15,7 @@ public class ChainConfig {
     private String blocksTable;
     private String clickhouseJDBCURI;
     private String startTimestamp;
+    private boolean isHotFlow;
 
     public static ChainConfig readChainConfig(String file) {
         String fileContents = FileUtils.readFile(file, Charset.forName("UTF-8"));
@@ -29,6 +30,10 @@ public class ChainConfig {
 
     public String getPubSubSubscriptionPrefix() {
         return pubSubSubscriptionPrefix;
+    }
+
+    public boolean isHotFlow() {
+        return isHotFlow;
     }
 
     public String getStartTimestamp() {

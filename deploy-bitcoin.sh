@@ -8,7 +8,7 @@ mvn -e -Pdataflow-runner compile exec:java \
 --tempLocation=gs:///blockchain-etl-streaming/bitcoin-etl/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=bitcoin-pubsub-to-clickhouse-dev-25 \
+--jobName=bitcoin-prod \
 --workerMachineType=n1-standard-1 \
 --maxNumWorkers=1 \
 --diskSizeGb=30 \

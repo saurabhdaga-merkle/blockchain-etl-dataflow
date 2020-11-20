@@ -33,6 +33,23 @@ public final class Schemas {
             Schema.Field.of("uuid", Schema.FieldType.STRING)
     );
 
+    public static final Schema MASTER_HOT = Schema.of(
+            Schema.Field.of("transaction_hash", Schema.FieldType.STRING),
+            Schema.Field.of("sender_address", Schema.FieldType.STRING),
+            Schema.Field.of("receiver_address", Schema.FieldType.STRING),
+            Schema.Field.of("type", Schema.FieldType.INT16),
+            Schema.Field.of("value", Schema.FieldType.STRING),
+            Schema.Field.of("token_address", Schema.FieldType.STRING),
+            Schema.Field.of("block_date_time", Schema.FieldType.DATETIME),
+            Schema.Field.of("block_number", Schema.FieldType.INT64),
+            Schema.Field.of("fee", Schema.FieldType.STRING),
+            Schema.Field.of("gas", Schema.FieldType.INT64),
+            Schema.Field.of("log_index", Schema.FieldType.INT32),
+            Schema.Field.of("status", Schema.FieldType.INT16),
+            Schema.Field.of("uuid", Schema.FieldType.STRING),
+            Schema.Field.of("sign", Schema.FieldType.BYTE)
+    );
+
     private Schemas() {
     }
 }

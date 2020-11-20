@@ -19,9 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class TransactionsBlocksClickhousePipeline {
+public class TransactionsBlocksHotClickhousePipeline {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionsBlocksClickhousePipeline.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionsBlocksHotClickhousePipeline.class);
 
     private static final String PUBSUB_ID_ATTRIBUTE = "item_id";
 
@@ -38,7 +38,7 @@ public class TransactionsBlocksClickhousePipeline {
         LOG.info(pipelineResult.toString());
     }
 
-    public static void buildBlockPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    public static void buildBlockPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) throws Exception {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-blocks");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
@@ -101,7 +101,7 @@ public class TransactionsBlocksClickhousePipeline {
                         try {
                             String item = c.element();
                             Transaction transaction = JsonUtils.parseJson(item, Transaction.class);
-                            c.output(Row.withSchema(Schemas.TRANSACTIONS)
+                            c.output(Row.withSchema(Schemas.TRANSACTIONS_HOT)
                                     .addValues(
                                             transaction.getTransactionId(),
                                             transaction.getHash(),
@@ -137,7 +137,8 @@ public class TransactionsBlocksClickhousePipeline {
                                             transaction.getOutputsIndex(),
                                             transaction.getOutputsScriptAsm(),
                                             transaction.getOutputsScriptHex(),
-                                            transaction.getOutputsAddress()).build());
+                                            transaction.getOutputsAddress(),
+                                            (byte) 1).build());
                         } catch (Exception e) {
                             LOG.error("Failed to process input {}.", c.element(), e);
                             if (e.getCause() instanceof OutOfMemoryError ||
@@ -152,7 +153,7 @@ public class TransactionsBlocksClickhousePipeline {
                         chainConfig.getTransactionsTable())
                         .withMaxRetries(10)
                         .withMaxInsertBlockSize(100000)
-                        .withInitialBackoff(Duration.standardSeconds(3))
+                        .withInitialBackoff(Duration.standardSeconds(5))
                         .withInsertDeduplicate(false)
                         .withInsertDistributedSync(false));
     }
