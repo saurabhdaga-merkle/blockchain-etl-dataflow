@@ -11,6 +11,22 @@ import org.joda.time.DateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Reports {
 
+    @Nullable
+    @JsonProperty("account")
+    private String account;
+    @Nullable
+    @JsonProperty("amount")
+    private Double amount;
+    @Nullable
+    @JsonProperty("hash")
+    private String hash;
+    @Nullable
+    @JsonProperty("executed_time")
+    private DateTime executedTime;
+    @Nullable
+    @JsonProperty("ledger_index")
+    private Long ledger_index;
+
     public String getAccount() {
         return account;
     }
@@ -26,27 +42,6 @@ public class Reports {
     public void setAmount(Double amount) {
         this.amount = amount;
     }
-
-    @Nullable
-    @JsonProperty("account")
-    private String account;
-
-    @Nullable
-    @JsonProperty("amount")
-    private Double amount;
-
-    @Nullable
-    @JsonProperty("hash")
-    private String hash;
-
-    @Nullable
-    @JsonProperty("executed_time")
-    private DateTime executedTime;
-
-
-    @Nullable
-    @JsonProperty("ledger_index")
-    private Long ledger_index;
 
     public String getHash() {
         return hash;

@@ -2,6 +2,7 @@ package io.blockchainetl.bitcoin.domain;
 
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.avro.reflect.Nullable;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
@@ -11,6 +12,7 @@ import org.joda.time.DateTime;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @DefaultCoder(AvroCoder.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -407,5 +409,41 @@ public class Transaction implements Serializable {
 
     public Float getCoinPriceUSD() {
         return coinPriceUSD;
+    }
+
+    public Map<String, Long> getGroupedInputs() {
+        Map<String, Long> data = Maps.newHashMap();
+
+        for (TransactionInput eachInput : getInputs()) {
+            if (eachInput.getType() == null)
+                data.put("", 0L);
+            else
+            if(data.containsKey(eachInput.getAddresses()))
+                data.put(eachInput.getAddresses(),
+                        data.get(eachInput.getAddresses()) + eachInput.getValue());
+            else
+                data.put(eachInput.getAddresses(),
+                        eachInput.getValue());
+        }
+
+        return data;
+    }
+
+    public Map<String, Long> getGroupedOutputs() {
+        Map<String, Long> data = Maps.newHashMap();
+
+        for (TransactionOutput eachOutput : getOutputs()) {
+            if (eachOutput.getValue() == null)
+                data.put("", 0L);
+            else
+            if(data.containsKey(eachOutput.getAddresses()))
+                data.put(eachOutput.getAddresses(),
+                        data.get(eachOutput.getAddresses()) + eachOutput.getValue());
+            else
+                data.put(eachOutput.getAddresses(),
+                        eachOutput.getValue());
+        }
+
+        return data;
     }
 }

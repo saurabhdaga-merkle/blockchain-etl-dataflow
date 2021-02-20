@@ -8,7 +8,7 @@ mvn -e -Pdataflow-runner compile exec:java \
 --tempLocation=gs:///blockchain-etl-streaming/bitcoin-etl/hot/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=bitcoin-0-lag-prod \
+--jobName=bitcoin-0-lag-prod-4 \
 --workerMachineType=n1-standard-1 \
 --numWorkers=4 \
 --maxNumWorkers=4 \

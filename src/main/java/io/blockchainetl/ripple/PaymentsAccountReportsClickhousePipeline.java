@@ -1,11 +1,11 @@
 package io.blockchainetl.ripple;
 
-import io.blockchainetl.ripple.clickhouse.Schemas;
-import io.blockchainetl.ripple.domain.Payments;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
+import io.blockchainetl.ripple.clickhouse.Schemas;
+import io.blockchainetl.ripple.domain.Payments;
 import io.blockchainetl.ripple.domain.Reports;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -80,7 +80,6 @@ public class PaymentsAccountReportsClickhousePipeline {
     }
 
 
-
     public static void buildPaymentsPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-payments");
 
@@ -103,7 +102,7 @@ public class PaymentsAccountReportsClickhousePipeline {
                                             payments.getFee(),
                                             payments.getSourceTag(),
                                             payments.getDestinationTag()
-                                           ).build());
+                                    ).build());
                         } catch (Exception e) {
                             LOG.error("Failed to process input {}.", c.element(), e);
                             if (e.getCause() instanceof OutOfMemoryError ||

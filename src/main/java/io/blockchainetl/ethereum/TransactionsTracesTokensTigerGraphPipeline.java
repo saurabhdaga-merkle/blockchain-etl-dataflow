@@ -1,4 +1,4 @@
-package io.blockchainetl.bitcoin;
+package io.blockchainetl.ethereum;
 
 import com.google.api.client.util.Lists;
 import io.blockchainetl.bitcoin.domain.Transaction;
@@ -28,10 +28,10 @@ import static io.blockchainetl.common.tigergraph.Utils.tigerGraphPost;
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects.firstNonNull;
 
 
-public class TransactionsBlocksTigerGraphPipeline {
+public class TransactionsTracesTokensTigerGraphPipeline {
 
     private static final Logger LOG =
-            LoggerFactory.getLogger(TransactionsBlocksTigerGraphPipeline.class);
+            LoggerFactory.getLogger(TransactionsTracesTokensTigerGraphPipeline.class);
 
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
@@ -47,6 +47,8 @@ public class TransactionsBlocksTigerGraphPipeline {
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
     }
+
+
 
     public static void buildTransactionPipeline(Pipeline p,
                                                 PubSubToClickhousePipelineOptions options,

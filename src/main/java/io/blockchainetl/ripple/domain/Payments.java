@@ -1,7 +1,6 @@
 package io.blockchainetl.ripple.domain;
 
 
-import com.google.common.collect.Lists;
 import org.apache.avro.reflect.Nullable;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
@@ -10,11 +9,37 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
-import java.util.List;
 
 @DefaultCoder(AvroCoder.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Payments implements Serializable {
+    @Nullable
+    private String hash;
+    @Nullable
+    @JsonProperty("executed_time")
+    private DateTime executedTime;
+    @Nullable
+    private String account;
+    @Nullable
+    private String destination;
+    @Nullable
+    @JsonProperty("ledger_index")
+    private Long ledger_index;
+    @Nullable
+    @JsonProperty("delivered_amount")
+    private Double delivered_amount;
+    @Nullable
+    private Double fee;
+    @Nullable
+    @JsonProperty("source_tag")
+    private Long source_tag;
+    @Nullable
+    @JsonProperty("destination_tag")
+    private Long destination_tag;
+
+    public Payments() {
+    }
+
     @Override
     public String toString() {
         return "Payments{" +
@@ -28,41 +53,6 @@ public class Payments implements Serializable {
                 ", source_tag=" + source_tag +
                 ", destination_tag=" + destination_tag +
                 '}';
-    }
-
-    @Nullable
-    private String hash;
-
-    @Nullable
-    @JsonProperty("executed_time")
-    private DateTime executedTime;
-
-    @Nullable
-    private String account;
-
-    @Nullable
-    private String destination;
-
-    @Nullable
-    @JsonProperty("ledger_index")
-    private Long ledger_index;
-
-    @Nullable
-    @JsonProperty("delivered_amount")
-    private Double delivered_amount;
-
-    @Nullable
-    private Double fee;
-
-    @Nullable
-    @JsonProperty("source_tag")
-    private Long source_tag;
-
-    @Nullable
-    @JsonProperty("destination_tag")
-    private Long destination_tag;
-
-    public Payments() {
     }
 
     public String getHash() {

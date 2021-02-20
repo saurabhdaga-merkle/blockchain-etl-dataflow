@@ -1,7 +1,6 @@
 package io.blockchainetl.ripple.clickhouse;
 
 import org.apache.beam.sdk.schemas.Schema;
-import org.joda.time.DateTime;
 
 import static org.apache.beam.sdk.schemas.Schema.of;
 

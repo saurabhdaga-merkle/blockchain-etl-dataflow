@@ -152,7 +152,7 @@ public class TransactionsBlocksClickhousePipeline {
                         chainConfig.getTransactionsTable())
                         .withMaxRetries(10)
                         .withMaxInsertBlockSize(100000)
-                        .withInitialBackoff(Duration.standardSeconds(3))
+                        .withInitialBackoff(Duration.standardSeconds(5))
                         .withInsertDeduplicate(false)
                         .withInsertDistributedSync(false));
     }

@@ -15,6 +15,7 @@ public class ChainConfig {
     private String blocksTable;
     private String clickhouseJDBCURI;
     private String startTimestamp;
+    private String tigergraphHosts;
     private boolean isHotFlow;
 
     public static ChainConfig readChainConfig(String file) {
@@ -52,4 +53,7 @@ public class ChainConfig {
         return blocksTable;
     }
 
+    public String[] getTigergraphHosts() {
+        return tigergraphHosts.split(";");
+    }
 }
