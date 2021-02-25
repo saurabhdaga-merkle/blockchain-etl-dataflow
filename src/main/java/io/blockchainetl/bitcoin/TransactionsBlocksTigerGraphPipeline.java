@@ -5,7 +5,7 @@ import io.blockchainetl.bitcoin.domain.Transaction;
 import io.blockchainetl.bitcoin.domain.TransactionInput;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
-import io.blockchainetl.common.utils.CryptoCompare;
+import io.blockchainetl.common.utils.TokenPrices;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
 import org.apache.beam.sdk.Pipeline;
@@ -115,7 +115,7 @@ public class TransactionsBlocksTigerGraphPipeline {
                                         ) / Math.pow(10, 8),
                                         transaction.getGroupedInputs().get(
                                                 input.getAddresses()
-                                        )  / Math.pow(10, 8) * CryptoCompare.get_hourly_price(currencyCode)));
+                                        )  / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
                                 linkInputs.append("\n");
                             }
 
@@ -129,7 +129,7 @@ public class TransactionsBlocksTigerGraphPipeline {
                                         transaction.getGroupedOutputs().get(
                                                 transaction.getOutputs().get(i).getAddresses()
                                         ) / Math.pow(10, 8)
-                                                * CryptoCompare.get_hourly_price(currencyCode)));
+                                                * TokenPrices.get_hourly_price(currencyCode)));
                                 linkOutputs.append("\n");
 
                                 for (int j = 0; j < transaction.getInputs().size(); j++) {
@@ -146,7 +146,7 @@ public class TransactionsBlocksTigerGraphPipeline {
                                     transaction.getOutputValue() / Math.pow(10, 8) * transaction.getCoinPriceUSD(),
                                     transaction.getBlockDateTime(),
                                     transaction.getFee() / Math.pow(10, 8),
-                                    transaction.getFee() / Math.pow(10, 8) * CryptoCompare.get_hourly_price(currencyCode)));
+                                    transaction.getFee() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
                             transactions.append("\n");
                         }
 

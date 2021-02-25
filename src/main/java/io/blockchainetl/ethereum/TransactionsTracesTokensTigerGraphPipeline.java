@@ -1,13 +1,14 @@
 package io.blockchainetl.ethereum;
 
 import com.google.api.client.util.Lists;
-import io.blockchainetl.bitcoin.domain.Transaction;
-import io.blockchainetl.bitcoin.domain.TransactionInput;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
-import io.blockchainetl.common.utils.CryptoCompare;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
+import io.blockchainetl.common.utils.TokenPrices;
+import io.blockchainetl.ethereum.domain.TokenTransfer;
+import io.blockchainetl.ethereum.domain.Trace;
+import io.blockchainetl.ethereum.domain.Transaction;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
@@ -33,6 +34,9 @@ public class TransactionsTracesTokensTigerGraphPipeline {
     private static final Logger LOG =
             LoggerFactory.getLogger(TransactionsTracesTokensTigerGraphPipeline.class);
 
+    private static final int MAX_BUFFER_SIZE = 5000;
+    private static final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(5);
+
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
             ChainConfig chainConfig,
@@ -42,12 +46,246 @@ public class TransactionsTracesTokensTigerGraphPipeline {
     ) {
         Pipeline p = Pipeline.create(options);
 
+
         buildTransactionPipeline(p, options, chainConfig, chain, currencyCode, tigergraphHosts);
+        buildTracesPipeline(p, options, chainConfig, chain, currencyCode, tigergraphHosts);
+        buildTokenTransfersPipeline(p, options, chainConfig, chain, tigergraphHosts);
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
     }
 
+    private static void buildTokenTransfersPipeline(Pipeline p,
+                                                    PubSubToClickhousePipelineOptions options,
+                                                    ChainConfig chainConfig,
+                                                    String chain,
+                                                    String[] tigergraphHosts) {
+        String transformNameSuffix =
+                StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-token_transfers");
+        Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        p.apply(transformNameSuffix + "-ReadFromPubSub",
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "token_transfers"))
+                .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
+                    /*
+                     * NOTE:
+                     * In order to work with timers, Beam need require input
+                     * to be in (key,value) pairs
+                     *
+                     * This will work but is against distributed principles.
+                     * Beam tries to partition processing across distributed
+                     * workers based on 'keys'. However, we assign an empty
+                     * string as key to all values. Thus, all records will essentially
+                     * be processed on the same worker.
+                     *
+                     * To avoid this, come up with a 'key'
+                     * I cannot do it, since I'm not familiar with the code internals
+                     */
+                    @ProcessElement
+                    public void processElement(ProcessContext c) {
+                        c.output(KV.of("", c.element()));
+                    }
+                }))
+                .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
+
+                    @StateId("buffer")
+                    private final StateSpec<BagState<KV<String, String>>> bufferedEvents = StateSpecs.bag();
+                    @StateId("count")
+                    private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
+                    @TimerId("stale")
+                    private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
+
+                    private void publishItemsToTG(List<TokenTransfer> tokenTransfers) throws Exception {
+
+                        StringBuilder linkFlat = new StringBuilder();
+
+                        for (TokenTransfer eachTokenTransfer : tokenTransfers) {
+                            if (TokensMetadataUtils.containsTokenMetadata(eachTokenTransfer.getTokenAddress())) {
+                                linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%S",
+                                        eachTokenTransfer.getTransactionHash(),
+                                        eachTokenTransfer.getFromAddress(),
+                                        eachTokenTransfer.getToAddress(),
+                                        TokensMetadataUtils.getTokenMetadata(eachTokenTransfer.getTokenAddress()).getSymbol(),
+                                        2,
+                                        Double.parseDouble(eachTokenTransfer.getValue())
+                                                / TokensMetadataUtils.getTokenMetadata(eachTokenTransfer.getTokenAddress()).getDecimals(),
+                                        Double.parseDouble(eachTokenTransfer.getValue())
+                                                / TokensMetadataUtils.getTokenMetadata(eachTokenTransfer.getTokenAddress()).getDecimals()
+                                                * TokenPrices.get_hourly_price(TokensMetadataUtils.getTokenMetadata(
+                                                eachTokenTransfer.getTokenAddress()).getSymbol()),
+                                        eachTokenTransfer.getBlockDateTime(),
+                                        0,
+                                        0
+                                )).append("\n");
+                            }
+                        }
+
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                    }
+
+                    @OnTimer("stale")
+                    public void onStale(
+                            OnTimerContext context,
+                            @StateId("buffer") BagState<KV<String, String>> bufferState,
+                            @StateId("count") ValueState<Integer> countState) throws Exception {
+
+                        System.out.print("stale");
+                        List<TokenTransfer> fullBatchResults = Lists.newArrayList();
+
+                        if (!bufferState.isEmpty().read()) {
+                            for (KV<String, String> item : bufferState.read()) {
+                                fullBatchResults.add(JsonUtils.parseJson(item.getValue(), TokenTransfer.class));
+                            }
+
+                            publishItemsToTG(fullBatchResults);
+                            bufferState.clear();
+                            countState.clear();
+                        }
+                    }
+
+                    @ProcessElement
+                    public void process(
+                            ProcessContext context,
+                            BoundedWindow window,
+                            @StateId("buffer") BagState<KV<String, String>> bufferState,
+                            @StateId("count") ValueState<Integer> countState,
+                            @TimerId("stale") Timer staleTimer) throws Exception {
+
+                        if (firstNonNull(countState.read(), 0) == 0) {
+                            staleTimer.offset(MAX_BUFFER_DURATION).setRelative();
+                        }
+
+
+                        int count = firstNonNull(countState.read(), 0);
+                        count = count + 1;
+                        countState.write(count);
+                        bufferState.add(context.element());
+
+                        List<TokenTransfer> fullBatchResults = Lists.newArrayList();
+                        if (count >= MAX_BUFFER_SIZE) {
+                            for (KV<String, String> item : bufferState.read()) {
+                                fullBatchResults.add(JsonUtils.parseJson(item.getValue(), TokenTransfer.class));
+                            }
+
+                            publishItemsToTG(fullBatchResults);
+                            bufferState.clear();
+                            countState.clear();
+                        }
+                    }
+                }));
+    }
+
+    private static void buildTracesPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig, String chain, String currencyCode, String[] tigergraphHosts) {
+
+        String transformNameSuffix =
+                StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-traces");
+        Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        p.apply(transformNameSuffix + "-ReadFromPubSub",
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "traces"))
+                .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
+                    /*
+                     * NOTE:
+                     * In order to work with timers, Beam need require input
+                     * to be in (key,value) pairs
+                     *
+                     * This will work but is against distributed principles.
+                     * Beam tries to partition processing across distributed
+                     * workers based on 'keys'. However, we assign an empty
+                     * string as key to all values. Thus, all records will essentially
+                     * be processed on the same worker.
+                     *
+                     * To avoid this, come up with a 'key'
+                     * I cannot do it, since I'm not familiar with the code internals
+                     */
+                    @ProcessElement
+                    public void processElement(ProcessContext c) {
+                        c.output(KV.of("", c.element()));
+                    }
+                }))
+                .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
+
+                    @StateId("buffer")
+                    private final StateSpec<BagState<KV<String, String>>> bufferedEvents = StateSpecs.bag();
+                    @StateId("count")
+                    private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
+                    @TimerId("stale")
+                    private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
+
+                    private void publishItemsToTG(List<Trace> traces) throws Exception {
+
+                        StringBuilder linkFlat = new StringBuilder();
+
+                        for (Trace eachTrace : traces) {
+                            linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%S",
+                                    eachTrace.getTransactionHash(),
+                                    eachTrace.getFromAddress(),
+                                    eachTrace.getToAddress(),
+                                    currencyCode,
+                                    1,
+                                    Double.parseDouble(eachTrace.getValue()) / Math.pow(10, 18),
+                                    Double.parseDouble(eachTrace.getValue()) / Math.pow(10, 18)
+                                            * TokenPrices.get_hourly_price(currencyCode),
+                                    eachTrace.getBlockDateTime(),
+                                    0,
+                                    0
+                            )).append("\n");
+                        }
+
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                    }
+
+                    @OnTimer("stale")
+                    public void onStale(
+                            OnTimerContext context,
+                            @StateId("buffer") BagState<KV<String, String>> bufferState,
+                            @StateId("count") ValueState<Integer> countState) throws Exception {
+
+                        System.out.print("stale");
+                        List<Trace> fullBatchResults = Lists.newArrayList();
+
+                        if (!bufferState.isEmpty().read()) {
+                            for (KV<String, String> item : bufferState.read()) {
+                                fullBatchResults.add(JsonUtils.parseJson(item.getValue(), Trace.class));
+                            }
+
+                            publishItemsToTG(fullBatchResults);
+                            bufferState.clear();
+                            countState.clear();
+                        }
+                    }
+
+                    @ProcessElement
+                    public void process(
+                            ProcessContext context,
+                            BoundedWindow window,
+                            @StateId("buffer") BagState<KV<String, String>> bufferState,
+                            @StateId("count") ValueState<Integer> countState,
+                            @TimerId("stale") Timer staleTimer) throws Exception {
+
+                        if (firstNonNull(countState.read(), 0) == 0) {
+                            staleTimer.offset(MAX_BUFFER_DURATION).setRelative();
+                        }
+
+
+                        int count = firstNonNull(countState.read(), 0);
+                        count = count + 1;
+                        countState.write(count);
+                        bufferState.add(context.element());
+
+                        List<Trace> fullBatchResults = Lists.newArrayList();
+                        if (count >= MAX_BUFFER_SIZE) {
+                            for (KV<String, String> item : bufferState.read()) {
+                                fullBatchResults.add(JsonUtils.parseJson(item.getValue(), Trace.class));
+                            }
+
+                            publishItemsToTG(fullBatchResults);
+                            bufferState.clear();
+                            countState.clear();
+                        }
+                    }
+                }));
+    }
 
 
     public static void buildTransactionPipeline(Pipeline p,
@@ -84,77 +322,34 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
 
-                    private static final int MAX_BUFFER_SIZE = 200;
                     @StateId("buffer")
                     private final StateSpec<BagState<KV<String, String>>> bufferedEvents = StateSpecs.bag();
                     @StateId("count")
                     private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
-                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(3);
                     @TimerId("stale")
                     private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
 
                     private void publishItemsToTG(List<Transaction> txns) throws Exception {
-                        StringBuilder linkInputs = new StringBuilder();
-                        StringBuilder linkOutputs = new StringBuilder();
+
                         StringBuilder linkFlat = new StringBuilder();
-                        StringBuilder transactions = new StringBuilder();
-                        for (Transaction transaction : txns) {
-                            if (transaction.getCoinbase() == 1) {
-                                linkInputs.append(String.format("%s,%s,%s,%s",
-                                        transaction.getTransactionId(),
-                                        "Newly Generated Coins",
-                                        0,
-                                        0));
-                                linkInputs.append("\n");
-                            }
 
-                            for (TransactionInput input : transaction.getInputs()) {
-                                linkInputs.append(String.format("%s,%s,%s,%s",
-                                        transaction.getTransactionId(),
-                                        input.getAddresses(),
-                                        transaction.getGroupedInputs().get(
-                                                input.getAddresses()
-                                        ) / Math.pow(10, 8),
-                                        transaction.getGroupedInputs().get(
-                                                input.getAddresses()
-                                        )  / Math.pow(10, 8) * CryptoCompare.get_hourly_price(currencyCode)));
-                                linkInputs.append("\n");
-                            }
-
-                            for (int i = 0; i < transaction.getOutputs().size(); i++) {
-                                linkOutputs.append(String.format("%s,%s,%s,%s",
-                                        transaction.getTransactionId(),
-                                        transaction.getOutputs().get(i).getAddresses(),
-                                        transaction.getGroupedOutputs().get(
-                                                transaction.getOutputs().get(i).getAddresses()
-                                        ) / Math.pow(10, 8),
-                                        transaction.getGroupedOutputs().get(
-                                                transaction.getOutputs().get(i).getAddresses()
-                                        ) / Math.pow(10, 8)
-                                                * CryptoCompare.get_hourly_price(currencyCode)));
-                                linkOutputs.append("\n");
-
-                                for (int j = 0; j < transaction.getInputs().size(); j++) {
-                                    linkFlat.append(String.format("%s,%s,%s",
-                                            transaction.getInputs().get(j).getAddresses(),
-                                            transaction.getOutputs().get(i).getAddresses(),
-                                            transaction.getBlockDateTime()));
-                                    linkFlat.append("\n");
-                                }
-                            }
-                            transactions.append(String.format("%s,%s,%s,%s,%s,%s",
-                                    transaction.getTransactionId(),
-                                    transaction.getOutputValue() / Math.pow(10, 8),
-                                    transaction.getOutputValue() / Math.pow(10, 8) * transaction.getCoinPriceUSD(),
-                                    transaction.getBlockDateTime(),
-                                    transaction.getFee() / Math.pow(10, 8),
-                                    transaction.getFee() / Math.pow(10, 8) * CryptoCompare.get_hourly_price(currencyCode)));
-                            transactions.append("\n");
+                        for (Transaction eachTransaction : txns) {
+                            linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+                                    eachTransaction.getHash(),
+                                    eachTransaction.getFromAddress(),
+                                    eachTransaction.getToAddress(),
+                                    currencyCode,
+                                    0,
+                                    Double.parseDouble(eachTransaction.getValue()) / Math.pow(10, 18),
+                                    Double.parseDouble(eachTransaction.getValue()) / Math.pow(10, 18)
+                                            * TokenPrices.get_hourly_price(currencyCode),
+                                    eachTransaction.getBlockDateTime(),
+                                    eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18)),
+                                    eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18))
+                                            * TokenPrices.get_hourly_price(currencyCode)
+                            )).append("\n");
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkInputs.toString(), "daily_links_inputs");
-                        tigerGraphPost(tigergraphHosts, chain, linkOutputs.toString(), "daily_links_outputs");
-                        tigerGraphPost(tigergraphHosts, chain, transactions.toString(), "daily_transactions");
                         tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
                     }
 

@@ -3,7 +3,7 @@ package io.blockchainetl.ripple;
 import com.google.api.client.util.Lists;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
-import io.blockchainetl.common.utils.CryptoCompare;
+import io.blockchainetl.common.utils.TokenPrices;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
 import io.blockchainetl.ripple.domain.Payments;
@@ -74,12 +74,12 @@ public class PaymentsTigerGraphPipeline {
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
 
-                    private static final int MAX_BUFFER_SIZE = 200;
+                    private static final int MAX_BUFFER_SIZE = 5000;
                     @StateId("buffer")
                     private final StateSpec<BagState<KV<String, String>>> bufferedEvents = StateSpecs.bag();
                     @StateId("count")
                     private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
-                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(3);
+                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(10);
                     @DoFn.TimerId("stale")
                     private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
 
@@ -100,13 +100,13 @@ public class PaymentsTigerGraphPipeline {
                                     (eachPayment.getDeliveredAmount()
                                             + eachPayment.getFee())
                                             / Math.pow(10, 6)
-                                            * CryptoCompare.get_hourly_price(currencyCode),
+                                            * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getDeliveredAmount()
                                             / Math.pow(10, 6)
-                                            * CryptoCompare.get_hourly_price(currencyCode),
+                                            * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getFee(),
                                     eachPayment.getFee() / Math.pow(10, 6)
-                                            * CryptoCompare.get_hourly_price(currencyCode),
+                                            * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getExecutedTime()));
                             linkFlat.append("\n");
                         }

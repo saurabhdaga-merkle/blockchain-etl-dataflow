@@ -4,7 +4,7 @@ import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
-import static io.blockchainetl.bitcoin.TransactionsTracesTokensTigerGraphPipeline.runPipeline;
+import static io.blockchainetl.bitcoin.TransactionsBlocksTigerGraphPipeline.runPipeline;
 import static io.blockchainetl.common.domain.ChainConfig.readChainConfig;
 
 public class BitcoinCashPubSubToTigerGraphPipeline {
@@ -18,7 +18,7 @@ public class BitcoinCashPubSubToTigerGraphPipeline {
 
     static void runBitcoinPipeline(PubSubToClickhousePipelineOptions options) throws Exception {
         ChainConfig chainConfigs = readChainConfig(options.getChainConfigFile());
-        runPipeline(options,
+        TransactionsBlocksTigerGraphPipeline.runPipeline(options,
                 chainConfigs,
                 "bitcoin_cash",
                 "BCH",

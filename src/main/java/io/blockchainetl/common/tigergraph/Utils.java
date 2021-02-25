@@ -69,5 +69,32 @@ public class Utils {
         }
     }
 
+    public static String makeGetRequest(String url) throws Exception {
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestMethod("GET");
+
+        BufferedReader iny =
+                new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String output;
+        StringBuffer response = new StringBuffer();
+
+        while ((output = iny.readLine()) != null) {
+            response.append(output);
+        }
+        iny.close();
+
+        LOG.info(response.toString());
+        int responseCode = con.getResponseCode();
+        if (responseCode != 200) {
+            LOG.info("Response Code : " + responseCode);
+            //printing result from response
+            LOG.info(response.toString());
+            throw new Exception("Tigergraph error");
+        }
+        return response.toString();
+    }
+
 
 }
