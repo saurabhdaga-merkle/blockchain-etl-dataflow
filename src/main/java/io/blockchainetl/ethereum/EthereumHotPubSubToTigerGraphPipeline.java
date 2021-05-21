@@ -23,13 +23,14 @@ public class EthereumHotPubSubToTigerGraphPipeline {
 
     static void runEthereumPipeline(PubSubToClickhousePipelineOptions options) {
         ChainConfig chainConfig = readChainConfig(options.getChainConfigFile());
-        TokensMetadataUtils.readTokensMetadata();
         TransactionsTracesTokensTigerGraphPipeline.runPipeline(
                 options,
                 chainConfig,
                 "ethereum",
                 "ETH",
-                chainConfig.getTigergraphHosts());
+                chainConfig.getTigergraphHosts(),
+                chainConfig.getTokensMetadata()
+                );
     }
 
 }

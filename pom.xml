@@ -67,6 +67,16 @@ limitations under the License.
     </repositories>
 
     <build>
+
+        <resources>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>tokensMetadata.json</include>
+                </includes>
+            </resource>
+        </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

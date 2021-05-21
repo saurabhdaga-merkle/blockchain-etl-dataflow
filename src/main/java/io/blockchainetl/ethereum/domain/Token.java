@@ -3,10 +3,11 @@ package io.blockchainetl.ethereum.domain;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 @DefaultCoder(AvroCoder.class)
-public class Token {
+public class Token  implements Serializable {
     String address;
     String symbol;
     String name;

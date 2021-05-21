@@ -1,9 +1,0 @@
-{
-  "transformNamePrefix": "Bitcoin-Cash",
-  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_bitcoin_cash_cointaint.dataflow.clickhouse.",
-  "transactionsTable": "bitcoin_cash_transactions_daily",
-  "blocksTable": "bitcoin_cash_blocks_streaming",
-  "clickhouseJDBCURI": "jdbc:clickhouse://34.66.15.18:8123/streaming?password=mscience123",
-  "startTimestamp": "2019-03-02T00:00:00Z",
-  "tigergraphHosts": "http://m1.tigergraph.merklescience.com:9000;http://m2.tigergraph.merklescience.com:9000"
-}

@@ -8,10 +8,10 @@ mvn -e -Pdataflow-runner compile exec:java \
 --tempLocation=gs:///blockchain-etl-streaming/ripple-etl/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=ripple-prod \
+--jobName=clickhouse-ripple-prod-1238 \
 --workerMachineType=n1-standard-1 \
---numWorkers=2 \
---maxNumWorkers=2 \
+--numWorkers=3 \
+--maxNumWorkers=3 \
 --diskSizeGb=30 \
 --region=us-central1 \
 --zone=us-central1-a \

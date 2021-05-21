@@ -8,8 +8,9 @@ mvn -e -Pdataflow-runner compile exec:java \
 --tempLocation=gs:///blockchain-etl-streaming/ethereum-etl/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=ethereum-prod \
+--jobName=clickhouse-ethereum-prod-1238 \
 --workerMachineType=n1-standard-1 \
+--numWorkers=1 \
 --maxNumWorkers=1 \
 --diskSizeGb=30 \
 --region=us-central1 \

@@ -6,6 +6,7 @@ import io.blockchainetl.common.domain.ChainConfig;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
 import io.blockchainetl.common.utils.TokenPrices;
+import io.blockchainetl.ethereum.domain.Token;
 import io.blockchainetl.ethereum.domain.TokenTransfer;
 import io.blockchainetl.ethereum.domain.Trace;
 import io.blockchainetl.ethereum.domain.Transaction;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Map;
 
 import static io.blockchainetl.common.tigergraph.Utils.tigerGraphPost;
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects.firstNonNull;
@@ -34,22 +36,22 @@ public class TransactionsTracesTokensTigerGraphPipeline {
     private static final Logger LOG =
             LoggerFactory.getLogger(TransactionsTracesTokensTigerGraphPipeline.class);
 
-    private static final int MAX_BUFFER_SIZE = 5000;
-    private static final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(5);
+    private static final int MAX_BUFFER_SIZE = 50;
+    private static final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(1);
 
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
             ChainConfig chainConfig,
             String chain,
             String currencyCode,
-            String[] tigergraphHosts
-    ) {
+            String[] tigergraphHosts,
+            Map<String, Token> tokensMetadata) {
         Pipeline p = Pipeline.create(options);
 
 
         buildTransactionPipeline(p, options, chainConfig, chain, currencyCode, tigergraphHosts);
         buildTracesPipeline(p, options, chainConfig, chain, currencyCode, tigergraphHosts);
-        buildTokenTransfersPipeline(p, options, chainConfig, chain, tigergraphHosts);
+        buildTokenTransfersPipeline(p, options, chainConfig, chain, tigergraphHosts, tokensMetadata);
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
@@ -59,7 +61,8 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                                                     PubSubToClickhousePipelineOptions options,
                                                     ChainConfig chainConfig,
                                                     String chain,
-                                                    String[] tigergraphHosts) {
+                                                    String[] tigergraphHosts,
+                                                    Map<String, Token> tokensMetadata) {
         String transformNameSuffix =
                 StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-token_transfers");
         Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -83,7 +86,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                      */
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        c.output(KV.of("", c.element()));
+                        c.output(KV.of(String.valueOf(c.element().hashCode() % 50), c.element()));
                     }
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
@@ -100,19 +103,22 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                         StringBuilder linkFlat = new StringBuilder();
 
                         for (TokenTransfer eachTokenTransfer : tokenTransfers) {
-                            if (TokensMetadataUtils.containsTokenMetadata(eachTokenTransfer.getTokenAddress())) {
-                                linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%S",
+                            if (tokensMetadata.containsKey(eachTokenTransfer.getTokenAddress())) {
+                                LOG.info(String.valueOf(TokenPrices.coinPrices));
+                                LOG.info(TokenPrices.get_hourly_price(tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getSymbol()) +
+                                        "tx=" + eachTokenTransfer.getTransactionHash());
+                                linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                                         eachTokenTransfer.getTransactionHash(),
                                         eachTokenTransfer.getFromAddress(),
                                         eachTokenTransfer.getToAddress(),
-                                        TokensMetadataUtils.getTokenMetadata(eachTokenTransfer.getTokenAddress()).getSymbol(),
+                                        tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getSymbol(),
                                         2,
                                         Double.parseDouble(eachTokenTransfer.getValue())
-                                                / TokensMetadataUtils.getTokenMetadata(eachTokenTransfer.getTokenAddress()).getDecimals(),
+                                                / Math.pow(10, tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getDecimals()),
                                         Double.parseDouble(eachTokenTransfer.getValue())
-                                                / TokensMetadataUtils.getTokenMetadata(eachTokenTransfer.getTokenAddress()).getDecimals()
-                                                * TokenPrices.get_hourly_price(TokensMetadataUtils.getTokenMetadata(
-                                                eachTokenTransfer.getTokenAddress()).getSymbol()),
+                                                / Math.pow(10, tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getDecimals())
+                                                * TokenPrices.get_hourly_price(tokensMetadata.get(
+                                                        eachTokenTransfer.getTokenAddress()).getSymbol()),
                                         eachTokenTransfer.getBlockDateTime(),
                                         0,
                                         0
@@ -120,7 +126,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                             }
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")
@@ -200,7 +206,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                      */
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        c.output(KV.of("", c.element()));
+                        c.output(KV.of(String.valueOf(c.element().hashCode() % 50), c.element()));
                     }
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
@@ -217,7 +223,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                         StringBuilder linkFlat = new StringBuilder();
 
                         for (Trace eachTrace : traces) {
-                            linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%S",
+                            linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                                     eachTrace.getTransactionHash(),
                                     eachTrace.getFromAddress(),
                                     eachTrace.getToAddress(),
@@ -232,7 +238,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                             )).append("\n");
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")
@@ -241,7 +247,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                             @StateId("buffer") BagState<KV<String, String>> bufferState,
                             @StateId("count") ValueState<Integer> countState) throws Exception {
 
-                        System.out.print("stale");
+                        LOG.info("stale");
                         List<Trace> fullBatchResults = Lists.newArrayList();
 
                         if (!bufferState.isEmpty().read()) {
@@ -317,7 +323,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                      */
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        c.output(KV.of("", c.element()));
+                        c.output(KV.of(String.valueOf(c.element().hashCode() % 50), c.element()));
                     }
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
@@ -332,6 +338,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                     private void publishItemsToTG(List<Transaction> txns) throws Exception {
 
                         StringBuilder linkFlat = new StringBuilder();
+                        StringBuilder chainState = new StringBuilder();
 
                         for (Transaction eachTransaction : txns) {
                             linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
@@ -348,9 +355,15 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                                     eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18))
                                             * TokenPrices.get_hourly_price(currencyCode)
                             )).append("\n");
+
+                            chainState.append(String.format("%s,%s,%s", chain,
+                                    eachTransaction.getBlockDateTime(),
+                                    eachTransaction.getBlockNumber())
+                            ).append('\n');
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                        tigerGraphPost(tigergraphHosts, chain, chainState.toString(), "streaming_chainstate");
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")

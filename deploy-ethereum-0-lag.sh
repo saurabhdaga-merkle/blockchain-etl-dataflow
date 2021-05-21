@@ -8,12 +8,11 @@ mvn -e -Pdataflow-runner compile exec:java \
 --tempLocation=gs:///blockchain-etl-streaming/ethereum-etl/hot/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=ethereum-0-lag-prod \
+--jobName=clickhouse-ethereum-0-lag-prod-0513-2 \
 --workerMachineType=n1-standard-1 \
---numWorkers=2 \
---maxNumWorkers=2 \
+--numWorkers=4 \
+--maxNumWorkers=4 \
 --diskSizeGb=30 \
 --region=us-central1 \
 --zone=us-central1-a \
-"
 "

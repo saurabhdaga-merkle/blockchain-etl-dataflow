@@ -17,7 +17,6 @@ public class Utils {
             LoggerFactory.getLogger(Utils.class);
 
     public static void tigerGraphPost(String[] tigergraphHosts, String chain, String data, String job) throws Exception {
-
         for (int i = 0; i < tigergraphHosts.length; i++) {
             String url = tigergraphHosts[i] + "/ddl/" +
                     chain + "?&" +
@@ -30,6 +29,7 @@ public class Utils {
                 URL obj = new URL(url);
                 HttpURLConnection con = (HttpURLConnection) obj.openConnection();
                 con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("GSQL-TIMEOUT", "300000");
                 con.setRequestMethod("POST");
                 con.setDoOutput(true);
                 DataOutputStream wr = new DataOutputStream(con.getOutputStream());
@@ -52,7 +52,6 @@ public class Utils {
                 if (responseCode != 200) {
                     LOG.info(data);
                     LOG.info("Response Code : " + responseCode);
-                    //printing result from response
                     LOG.info(response.toString());
                     throw new Exception("Tigergraph error");
                 }

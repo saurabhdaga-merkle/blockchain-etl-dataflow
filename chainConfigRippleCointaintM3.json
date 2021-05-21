@@ -1,0 +1,9 @@
+{
+  "transformNamePrefix": "Ripple",
+  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_ripple_tigergraph_m3.dataflow.clickhouse.",
+  "transactionsTable": "ripple_payments_daily",
+  "blocksTable": "",
+  "clickhouseJDBCURIs": ["jdbc:clickhouse://35.202.46.77:8123/streaming?password=mscience123"],
+  "startTimestamp": "2020-08-02T00:00:00Z",
+  "tigergraphHosts": "http://m3.tigergraph.palantree.com:9000"
+}

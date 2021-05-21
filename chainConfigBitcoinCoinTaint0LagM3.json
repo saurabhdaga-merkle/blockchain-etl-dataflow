@@ -1,0 +1,9 @@
+{
+  "transformNamePrefix": "Bitcoin",
+  "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_bitcoin_0_lag_tigergraph_m3.dataflow.clickhouse.",
+  "transactionsTable": "bitcoin_transactions_daily",
+  "blocksTable": "bitcoin_blocks_streaming",
+  "clickhouseJDBCURIs": ["jdbc:clickhouse://34.66.15.18:8123/streaming?password=mscience123"],
+  "startTimestamp": "2019-03-02T00:00:00Z",
+  "tigergraphHosts": "http://m3.tigergraph.palantree.com:9000"
+}

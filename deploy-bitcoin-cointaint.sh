@@ -2,15 +2,32 @@
 
 mvn -e -Pdataflow-runner compile exec:java \
   -Dexec.mainClass=io.blockchainetl.bitcoin.BitcoinPubSubToTigerGraphPipeline \
-  -Dexec.args="--chainConfigFile=chainConfigBitcoinCointaint.json \
+  -Dexec.args="--chainConfigFile=chainConfigBitcoinCointaintM1.json \
 --allowedTimestampSkewSeconds=36000 \
 --defaultSdkHarnessLogLevel=DEBUG \
 --gcpTempLocation=gs://blockchain-etl-streaming/bitcoin-etl-cointaint/dataflow \
 --tempLocation=gs:///blockchain-etl-streaming/bitcoin-etl-cointaint/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=bitcoin-cointaint-tigergraph-2 \
---workerMachineType=n1-standard-2 \
+--jobName=tigergraph-bitcoin-m1-10 \
+--workerMachineType=n1-standard-1 \
+--maxNumWorkers=1 \
+--diskSizeGb=30 \
+--region=us-central1 \
+--zone=us-central1-a \
+"
+
+mvn -e -Pdataflow-runner compile exec:java \
+  -Dexec.mainClass=io.blockchainetl.bitcoin.BitcoinPubSubToTigerGraphPipeline \
+  -Dexec.args="--chainConfigFile=chainConfigBitcoinCointaintM3.json \
+--allowedTimestampSkewSeconds=36000 \
+--defaultSdkHarnessLogLevel=DEBUG \
+--gcpTempLocation=gs://blockchain-etl-streaming/bitcoin-etl-cointaint/dataflow \
+--tempLocation=gs:///blockchain-etl-streaming/bitcoin-etl-cointaint/dataflow \
+--project=staging-btc-etl \
+--runner=DataflowRunner \
+--jobName=tigergraph-bitcoin-m3-10 \
+--workerMachineType=n1-standard-1 \
 --maxNumWorkers=1 \
 --diskSizeGb=30 \
 --region=us-central1 \

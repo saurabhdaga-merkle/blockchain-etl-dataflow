@@ -8,8 +8,9 @@ mvn -e -Pdataflow-runner compile exec:java \
 --tempLocation=gs:///blockchain-etl-streaming/litecoin-etl/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=litecoin-prod-1 \
+--jobName=clickhouse-litecoin-prod-1238 \
 --workerMachineType=n1-standard-1 \
+--numWorkers=1 \
 --maxNumWorkers=1 \
 --diskSizeGb=30 \
 --region=us-central1 \

@@ -2,9 +2,6 @@ package io.blockchainetl.ethereum;
 
 import com.google.common.collect.Maps;
 import io.blockchainetl.ethereum.domain.Token;
-import io.blockchainetl.ethereum.domain.TokensMetadata;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,34 +11,18 @@ public class TokensMetadataUtils {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(TransactionsTracesTokensTigerGraphPipeline.class);
-    private static Map<String, Token> tokensMetadata;
 
-    static Token createTokensMetadata(JSONObject metadata) {
-        return new Token(metadata.getString("address"),
-                metadata.getString("symbol"),
-                metadata.getString("name"),
-                metadata.getInt("decimals"));
+    static Token createTokensMetadata(String address, String symbol, String name, int decimals) {
+        return new Token(address, symbol, name, decimals);
     }
 
-    static void readTokensMetadata()  {
-        if(tokensMetadata == null) {
-            tokensMetadata = Maps.newHashMap();
+    public static Map<String, Token> parseTokensMetadata(String tokensMetadata) {
+        Map<String, Token> tokensMetadataMap = Maps.newHashMap();
 
-            JSONArray metadata = new JSONObject(TokensMetadata.TOKENS_METADATA).getJSONArray("data");
-            for (int i = 0; i < metadata.length(); i++) {
-                JSONObject tokenJson = metadata.getJSONObject(i);
-                tokensMetadata.put(tokenJson.getString("address"), createTokensMetadata(tokenJson));
-            }
+        for (String tokens : tokensMetadata.split(";")) {
+            String[] tokens_split = tokens.split(",");
+            tokensMetadataMap.put(tokens_split[0], createTokensMetadata(tokens_split[0], tokens_split[1], tokens_split[2], Integer.parseInt(tokens_split[3])));
         }
-    }
-
-    public static Token getTokenMetadata(String address) {
-        readTokensMetadata();
-        return tokensMetadata.get(address);
-    }
-
-    public static boolean containsTokenMetadata(String address) {
-        readTokensMetadata();
-        return tokensMetadata.containsKey(address);
+        return tokensMetadataMap;
     }
 }

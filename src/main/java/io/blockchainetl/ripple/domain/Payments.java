@@ -37,9 +37,6 @@ public class Payments implements Serializable {
     @JsonProperty("destination_tag")
     private Long destination_tag;
 
-    public Payments() {
-    }
-
     @Override
     public String toString() {
         return "Payments{" +

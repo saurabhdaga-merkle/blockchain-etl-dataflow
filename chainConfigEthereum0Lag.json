@@ -3,6 +3,9 @@
   "pubSubSubscriptionPrefix": "projects/staging-btc-etl/subscriptions/crypto_ethereum_0_lag.dataflow.clickhouse.",
   "transactionsTable": "ethereum_daily_hot",
   "blocksTable": "",
-  "clickhouseJDBCURI": "jdbc:clickhouse://34.66.15.18:8123/streaming?password=mscience123",
+  "clickhouseJDBCURIs": ["jdbc:clickhouse://34.66.15.18:8123/streaming?password=mscience123",
+    "jdbc:clickhouse://35.222.77.145:8123/streaming?password=mscience123",
+    "jdbc:clickhouse://34.68.122.170:8123/streaming?password=mscience123"
+  ],
   "startTimestamp": "2019-03-02T00:00:00Z"
 }

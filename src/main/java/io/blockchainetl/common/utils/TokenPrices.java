@@ -18,17 +18,17 @@ public class TokenPrices {
     private static final Logger LOG =
             LoggerFactory.getLogger(TokenPrices.class);
 
-    private static LoadingCache<String, Long> coinPrices = CacheBuilder.newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
+    public static LoadingCache<String, Float> coinPrices = CacheBuilder.newBuilder()
+            .expireAfterWrite(120, TimeUnit.MINUTES)
             .build(
-                    new CacheLoader<String, Long>() {
-                        public Long load(String key) throws Exception {
+                    new CacheLoader<String, Float>() {
+                        public Float load(String key) throws Exception {
                             return TokenPrices.makeRequest(key);
                         }
                     });
 
     private static String formRequestURL(String fromCurrencyCode,
-                                         int timestamp) {
+                                         long timestamp) {
 
         String baseUri = "https://min-api.cryptocompare.com/data/" + "v2" + "/" + "histohour" + "?";
         baseUri += "fsym=" + fromCurrencyCode;
@@ -42,22 +42,21 @@ public class TokenPrices {
         return baseUri;
     }
 
-    private static Long makeRequest(String currencyCode) throws Exception {
+    private static float makeRequest(String currencyCode) throws Exception {
 
         try {
             String url = formRequestURL(
                     currencyCode,
-                    (int) System.currentTimeMillis()
-
+                    System.currentTimeMillis()
             );
 
             String response = Utils.makeGetRequest(url);
 
             JSONObject jsonResponse = new JSONObject(response);
             JSONArray data = jsonResponse.getJSONObject("Data").getJSONArray("Data");
-            long sumOfOpens = 0;
+            float sumOfOpens = 0;
             for (int i = 0; i < data.length(); i++) {
-                sumOfOpens += data.getJSONObject(i).getInt("open");
+                sumOfOpens += data.getJSONObject(i).getFloat("open");
             }
             return sumOfOpens / data.length();
         } catch (Exception e) {
@@ -66,7 +65,7 @@ public class TokenPrices {
         }
     }
 
-    public static Long get_hourly_price(String currencyCode) throws ExecutionException {
+    public static float get_hourly_price(String currencyCode) throws ExecutionException {
         if (currencyCode.equals("XSGD"))
             return FiatPrices.coinPrices.get(currencyCode);
         else return TokenPrices.coinPrices.get(currencyCode);

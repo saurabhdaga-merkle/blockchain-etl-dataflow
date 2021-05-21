@@ -2,6 +2,7 @@ package io.blockchainetl.ethereum;
 
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
+import io.blockchainetl.common.domain.Constants;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
 import io.blockchainetl.ethereum.clickhouse.Schemas;
@@ -15,7 +16,6 @@ import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.Row;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,11 +71,11 @@ public class TransactionsTracesTokensClickhousePipeline {
 
                 })).setRowSchema(Schemas.MASTER).apply(
                 ClickHouseIO.<Row>write(
-                        chainConfig.getClickhouseJDBCURI(),
+                        chainConfig.getRandomClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
-                        .withMaxRetries(3)
-                        .withMaxInsertBlockSize(100000)
-                        .withInitialBackoff(Duration.standardSeconds(5))
+                        .withMaxRetries(Constants.CH_MAX_RETRIES)
+                        .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
+                        .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
                         .withInsertDeduplicate(true)
                         .withInsertDistributedSync(false));
 
@@ -92,7 +92,6 @@ public class TransactionsTracesTokensClickhousePipeline {
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         Trace traces = JsonUtils.parseJson(item, Trace.class);
-                        System.out.println(traces.getFromAddress());
                         c.output(Row.withSchema(Schemas.MASTER)
                                 .addValues(traces.getTransactionHash(),
                                         traces.getFromAddress(),
@@ -111,11 +110,11 @@ public class TransactionsTracesTokensClickhousePipeline {
 
                 })).setRowSchema(Schemas.MASTER).apply(
                 ClickHouseIO.<Row>write(
-                        chainConfig.getClickhouseJDBCURI(),
+                        chainConfig.getRandomClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
-                        .withMaxRetries(3)
-                        .withMaxInsertBlockSize(100000)
-                        .withInitialBackoff(Duration.standardSeconds(5))
+                        .withMaxRetries(Constants.CH_MAX_RETRIES)
+                        .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
+                        .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
                         .withInsertDeduplicate(true)
                         .withInsertDistributedSync(false));
     }
@@ -149,11 +148,11 @@ public class TransactionsTracesTokensClickhousePipeline {
 
                 })).setRowSchema(Schemas.MASTER).apply(
                 ClickHouseIO.<Row>write(
-                        chainConfig.getClickhouseJDBCURI(),
+                        chainConfig.getRandomClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
-                        .withMaxRetries(10)
-                        .withMaxInsertBlockSize(100000)
-                        .withInitialBackoff(Duration.standardSeconds(5))
+                        .withMaxRetries(Constants.CH_MAX_RETRIES)
+                        .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
+                        .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
                         .withInsertDeduplicate(true)
                         .withInsertDistributedSync(false));
 

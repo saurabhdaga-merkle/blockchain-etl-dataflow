@@ -77,17 +77,17 @@ public class TransactionsBlocksTigerGraphPipeline {
                      */
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        c.output(KV.of("", c.element()));
+                        c.output(KV.of(String.valueOf(c.element().hashCode() % 20), c.element()));
                     }
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
 
-                    private static final int MAX_BUFFER_SIZE = 200;
+                    private static final int MAX_BUFFER_SIZE = 100;
                     @StateId("buffer")
                     private final StateSpec<BagState<KV<String, String>>> bufferedEvents = StateSpecs.bag();
                     @StateId("count")
                     private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
-                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(3);
+                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds((long) 0.5);
                     @TimerId("stale")
                     private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
 
@@ -96,6 +96,7 @@ public class TransactionsBlocksTigerGraphPipeline {
                         StringBuilder linkOutputs = new StringBuilder();
                         StringBuilder linkFlat = new StringBuilder();
                         StringBuilder transactions = new StringBuilder();
+                        StringBuilder chainState = new StringBuilder();
                         for (Transaction transaction : txns) {
                             if (transaction.getCoinbase() == 1) {
                                 linkInputs.append(String.format("%s,%s,%s,%s",
@@ -143,17 +144,23 @@ public class TransactionsBlocksTigerGraphPipeline {
                             transactions.append(String.format("%s,%s,%s,%s,%s,%s",
                                     transaction.getTransactionId(),
                                     transaction.getOutputValue() / Math.pow(10, 8),
-                                    transaction.getOutputValue() / Math.pow(10, 8) * transaction.getCoinPriceUSD(),
+                                    transaction.getOutputValue() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode),
                                     transaction.getBlockDateTime(),
                                     transaction.getFee() / Math.pow(10, 8),
                                     transaction.getFee() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
                             transactions.append("\n");
+
+                            chainState.append(String.format("%s,%s,%s", chain,
+                                    transaction.getBlockDateTime(),
+                                    transaction.getBlockNumber())
+                            ).append("\n");
                         }
 
+                        tigerGraphPost(tigergraphHosts, chain, chainState.toString(), "streaming_chainstate");
                         tigerGraphPost(tigergraphHosts, chain, linkInputs.toString(), "daily_links_inputs");
                         tigerGraphPost(tigergraphHosts, chain, linkOutputs.toString(), "daily_links_outputs");
                         tigerGraphPost(tigergraphHosts, chain, transactions.toString(), "daily_transactions");
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")

@@ -1,19 +1,35 @@
 #!/usr/bin/env bash
 
 mvn -e -Pdataflow-runner compile exec:java \
-  -Dexec.mainClass=io.blockchainetl.ethereum.EthereumHotPubSubToClickhousePipeline \
-  -Dexec.args="--chainConfigFile=chainConfigEthereum0Lag.json \
+  -Dexec.mainClass=io.blockchainetl.ethereum.EthereumHotPubSubToTigerGraphPipeline \
+  -Dexec.args="--chainConfigFile=chainConfigEthereum0LagCointaintM2.json \
 --allowedTimestampSkewSeconds=36000 \
---gcpTempLocation=gs://blockchain-etl-streaming/ethereum-etl/hot/dataflow \
---tempLocation=gs:///blockchain-etl-streaming/ethereum-etl/hot/dataflow \
+--gcpTempLocation=gs://blockchain-etl-streaming/ethereum-etl-cointaint/hot/dataflow \
+--tempLocation=gs:///blockchain-etl-streaming/ethereum-etl-cointaint/hot/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=ethereum-0-lag-prod \
+--jobName=tigergraph-ethereum-0-lag-m2-11 \
 --workerMachineType=n1-standard-1 \
---numWorkers=2 \
---maxNumWorkers=2 \
+--numWorkers=8 \
+--maxNumWorkers=8 \
 --diskSizeGb=30 \
 --region=us-central1 \
 --zone=us-central1-a \
 "
+
+mvn -e -Pdataflow-runner compile exec:java \
+  -Dexec.mainClass=io.blockchainetl.ethereum.EthereumHotPubSubToTigerGraphPipeline \
+  -Dexec.args="--chainConfigFile=chainConfigEthereum0LagCointaintM3.json \
+--allowedTimestampSkewSeconds=36000 \
+--gcpTempLocation=gs://blockchain-etl-streaming/ethereum-etl-cointaint/hot/dataflow \
+--tempLocation=gs:///blockchain-etl-streaming/ethereum-etl-cointaint/hot/dataflow \
+--project=staging-btc-etl \
+--runner=DataflowRunner \
+--jobName=tigergraph-ethereum-0-lag-m3-11 \
+--workerMachineType=n1-standard-1 \
+--numWorkers=8 \
+--maxNumWorkers=8 \
+--diskSizeGb=30 \
+--region=us-central1 \
+--zone=us-central1-a \
 "

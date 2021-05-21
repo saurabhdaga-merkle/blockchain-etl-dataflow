@@ -5,6 +5,7 @@ import io.blockchainetl.bitcoin.domain.Block;
 import io.blockchainetl.bitcoin.domain.Transaction;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
+import io.blockchainetl.common.domain.Constants;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
 import org.apache.beam.sdk.Pipeline;
@@ -14,7 +15,6 @@ import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.Row;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +32,7 @@ public class TransactionsBlocksHotClickhousePipeline {
         Pipeline p = Pipeline.create(options);
 
         buildTransactionPipeline(p, options, chainConfig);
-        buildBlockPipeline(p, options, chainConfig);
+        //buildBlockPipeline(p, options, chainConfig);
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
@@ -81,12 +81,12 @@ public class TransactionsBlocksHotClickhousePipeline {
 
                 })).setRowSchema(Schemas.BLOCKS).apply(
                 ClickHouseIO.<Row>write(
-                        chainConfig.getClickhouseJDBCURI(),
+                        chainConfig.getRandomClickhouseJDBCURI(),
                         chainConfig.getBlocksTable())
-                        .withMaxRetries(10)
-                        .withMaxInsertBlockSize(10000)
-                        .withInitialBackoff(Duration.standardSeconds(5))
-                        .withInsertDeduplicate(false)
+                        .withMaxRetries(Constants.CH_MAX_RETRIES)
+                        .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
+                        .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
+                        .withInsertDeduplicate(true)
                         .withInsertDistributedSync(false));
     }
 
@@ -149,12 +149,13 @@ public class TransactionsBlocksHotClickhousePipeline {
                     }
                 })).setRowSchema(Schemas.TRANSACTIONS).apply(
                 ClickHouseIO.<Row>write(
-                        chainConfig.getClickhouseJDBCURI(),
+                        chainConfig.getRandomClickhouseJDBCURI(),
                         chainConfig.getTransactionsTable())
-                        .withMaxRetries(10)
-                        .withMaxInsertBlockSize(100000)
-                        .withInitialBackoff(Duration.standardSeconds(5))
-                        .withInsertDeduplicate(false)
-                        .withInsertDistributedSync(false));
+                        .withMaxRetries(Constants.CH_MAX_RETRIES)
+                        .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
+                        .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
+                        .withInsertDeduplicate(true)
+                        .withInsertDistributedSync(false)
+        );
     }
 }

@@ -69,23 +69,24 @@ public class PaymentsTigerGraphPipeline {
 
                     @ProcessElement
                     public void processElement(ProcessContext c) {
-                        c.output(KV.of("", c.element()));
+                        c.output(KV.of(String.valueOf(c.element().hashCode() % 100), c.element()));
                     }
                 }))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<KV<String, String>, String>() {
 
-                    private static final int MAX_BUFFER_SIZE = 5000;
+                    private static final int MAX_BUFFER_SIZE = 100;
                     @StateId("buffer")
                     private final StateSpec<BagState<KV<String, String>>> bufferedEvents = StateSpecs.bag();
                     @StateId("count")
                     private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
-                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(10);
+                    private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(1);
                     @DoFn.TimerId("stale")
                     private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
 
                     private void publishItemsToTG(List<Payments> payments) throws Exception {
 
                         StringBuilder linkFlat = new StringBuilder();
+                        StringBuilder chainState = new StringBuilder();
 
                         for (Payments eachPayment : payments) {
                             linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
@@ -104,14 +105,21 @@ public class PaymentsTigerGraphPipeline {
                                     eachPayment.getDeliveredAmount()
                                             / Math.pow(10, 6)
                                             * TokenPrices.get_hourly_price(currencyCode),
-                                    eachPayment.getFee(),
+                                    eachPayment.getFee() / Math.pow(10, 6),
                                     eachPayment.getFee() / Math.pow(10, 6)
                                             * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getExecutedTime()));
                             linkFlat.append("\n");
+
+                            chainState.append(String.format("%s,%s,%s", chain,
+                                    eachPayment.getExecutedTime(),
+                                    eachPayment.getLedgerIndex())
+                            ).append('\n');
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_links_flat");
+                        tigerGraphPost(tigergraphHosts, chain, chainState.toString(), "streaming_chainstate");
+                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
+
                     }
 
                     @DoFn.OnTimer("stale")
@@ -120,7 +128,6 @@ public class PaymentsTigerGraphPipeline {
                             @DoFn.StateId("buffer") BagState<KV<String, String>> bufferState,
                             @StateId("count") ValueState<Integer> countState) throws Exception {
 
-                        System.out.print("stale");
                         List<Payments> fullBatchResults = Lists.newArrayList();
 
                         if (!bufferState.isEmpty().read()) {
