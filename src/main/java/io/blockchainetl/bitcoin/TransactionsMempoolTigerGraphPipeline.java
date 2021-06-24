@@ -26,10 +26,11 @@ import static io.blockchainetl.common.tigergraph.Utils.tigerGraphPost;
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.MoreObjects.firstNonNull;
 
 
-public class TransactionsBlocksTigerGraphPipeline {
+public class TransactionsMempoolTigerGraphPipeline {
 
     private static final Logger LOG =
-            LoggerFactory.getLogger(TransactionsBlocksTigerGraphPipeline.class);
+            LoggerFactory.getLogger(TransactionsMempoolTigerGraphPipeline.class);
+    private static DoFn<KV<String, String>, String> microDoFn;
 
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
@@ -78,73 +79,74 @@ public class TransactionsBlocksTigerGraphPipeline {
                     private void publishItemsToTG(List<Transaction> txns) throws Exception {
                         StringBuilder linkInputs = new StringBuilder();
                         StringBuilder linkOutputs = new StringBuilder();
-                        StringBuilder linkFlat = new StringBuilder();
                         StringBuilder transactions = new StringBuilder();
                         StringBuilder chainState = new StringBuilder();
                         for (Transaction transaction : txns) {
                             if (transaction.getCoinbase() == 1) {
-                                linkInputs.append(String.format("%s,%s,%s,%s",
-                                        transaction.getTransactionId(),
-                                        "Newly Generated Coins",
-                                        0,
-                                        0));
+                                linkInputs.append(
+                                        String.format(
+                                                "%s,%s,%s,%s",
+                                                transaction.getTransactionId(),
+                                                "Newly Generated Coins",
+                                                0,
+                                                0));
                                 linkInputs.append("\n");
                             }
 
                             for (TransactionInput input : transaction.getInputs()) {
-                                linkInputs.append(String.format("%s,%s,%s,%s",
-                                        transaction.getTransactionId(),
-                                        input.getAddresses(),
-                                        transaction.getGroupedInputs().get(
-                                                input.getAddresses()
-                                        ) / Math.pow(10, 8),
-                                        transaction.getGroupedInputs().get(
-                                                input.getAddresses()
-                                        )  / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
+                                linkInputs.append(
+                                        String.format(
+                                                "%s,%s,%s,%s",
+                                                transaction.getTransactionId(),
+                                                input.getAddresses(),
+                                                transaction.getGroupedInputs().get(
+                                                        input.getAddresses()
+                                                ) / Math.pow(10, 8),
+                                                transaction.getGroupedInputs().get(
+                                                        input.getAddresses()
+                                                ) / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
                                 linkInputs.append("\n");
                             }
 
                             for (int i = 0; i < transaction.getOutputs().size(); i++) {
-                                linkOutputs.append(String.format("%s,%s,%s,%s",
-                                        transaction.getTransactionId(),
-                                        transaction.getOutputs().get(i).getAddresses(),
-                                        transaction.getGroupedOutputs().get(
-                                                transaction.getOutputs().get(i).getAddresses()
-                                        ) / Math.pow(10, 8),
-                                        transaction.getGroupedOutputs().get(
-                                                transaction.getOutputs().get(i).getAddresses()
-                                        ) / Math.pow(10, 8)
-                                                * TokenPrices.get_hourly_price(currencyCode)));
+                                linkOutputs.append(
+                                        String.format(
+                                                "%s,%s,%s,%s",
+                                                transaction.getTransactionId(),
+                                                transaction.getOutputs().get(i).getAddresses(),
+                                                transaction.getGroupedOutputs().get(
+                                                        transaction.getOutputs().get(i).getAddresses()
+                                                ) / Math.pow(10, 8),
+                                                transaction.getGroupedOutputs().get(
+                                                        transaction.getOutputs().get(i).getAddresses()
+                                                ) / Math.pow(10, 8)
+                                                        * TokenPrices.get_hourly_price(currencyCode)));
                                 linkOutputs.append("\n");
 
-                                for (int j = 0; j < transaction.getInputs().size(); j++) {
-                                    linkFlat.append(String.format("%s,%s,%s",
-                                            transaction.getInputs().get(j).getAddresses(),
-                                            transaction.getOutputs().get(i).getAddresses(),
-                                            transaction.getBlockDateTime()));
-                                    linkFlat.append("\n");
-                                }
                             }
-                            transactions.append(String.format("%s,%s,%s,%s,%s,%s",
-                                    transaction.getTransactionId(),
-                                    transaction.getOutputValue() / Math.pow(10, 8),
-                                    transaction.getOutputValue() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode),
-                                    transaction.getBlockDateTime(),
-                                    transaction.getFee() / Math.pow(10, 8),
-                                    transaction.getFee() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
+                            transactions.append(
+                                    String.format(
+                                            "%s,%s,%s,%s,%s,%s",
+                                            transaction.getTransactionId(),
+                                            transaction.getOutputValue() / Math.pow(10, 8),
+                                            transaction.getOutputValue() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode),
+                                            transaction.getBlockDateTime(),
+                                            transaction.getFee() / Math.pow(10, 8),
+                                            transaction.getFee() / Math.pow(10, 8) * TokenPrices.get_hourly_price(currencyCode)));
                             transactions.append("\n");
 
-                            chainState.append(String.format("%s,%s,%s", currency,
-                                    transaction.getBlockDateTime(),
-                                    transaction.getBlockNumber())
+                            chainState.append(
+                                    String.format(
+                                            "%s,%s,%s",
+                                            currency,
+                                            transaction.getBlockDateTime(),
+                                            transaction.getBlockNumber())
                             ).append("\n");
                         }
 
-                        tigerGraphPost(tigergraphHost, currency, chainState.toString(), "streaming_chainstate");
+                        tigerGraphPost(tigergraphHost, currency, transactions.toString(), "load_mempool_transactions");
                         tigerGraphPost(tigergraphHost, currency, linkInputs.toString(), "daily_links_inputs");
                         tigerGraphPost(tigergraphHost, currency, linkOutputs.toString(), "daily_links_outputs");
-                        tigerGraphPost(tigergraphHost, currency, transactions.toString(), "daily_transactions");
-                        tigerGraphPost(tigergraphHost, currency, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")

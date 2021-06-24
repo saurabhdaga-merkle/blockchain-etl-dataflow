@@ -1,0 +1,5 @@
+{
+  "transactionsTable": " bitcoin_transactions_daily_hot",
+  "blocksTable": "bitcoin_blocks_streaming_hot",
+  "currencyCode": "BTC"
+}

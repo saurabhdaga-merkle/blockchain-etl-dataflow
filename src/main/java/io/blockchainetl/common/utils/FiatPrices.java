@@ -15,7 +15,7 @@ public class FiatPrices {
     private static final Logger LOG =
             LoggerFactory.getLogger(FiatPrices.class);
     public static LoadingCache<String, Float> coinPrices = CacheBuilder.newBuilder()
-            .expireAfterWrite(24, TimeUnit.HOURS)
+            .expireAfterWrite(48, TimeUnit.HOURS)
             .build(
                     new CacheLoader<String, Float>() {
                         public Float load(String key) throws Exception {

@@ -1,5 +1,6 @@
 package io.blockchainetl.common.domain;
 
+import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.utils.FileUtils;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.ethereum.TokensMetadataUtils;
@@ -11,48 +12,79 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static io.blockchainetl.common.utils.JsonUtils.mergeObjects;
+
+/**
+ *
+ */
 public class ChainConfig {
 
-    private String transformNamePrefix;
-    private String pubSubSubscriptionPrefix;
-    private String clickhouseDatabase;
+    private static String CONFIGS_PATH = "config/";
+    private static String CONFIGS_FILE = "common.json";
+
+    private String pubSubSubscriptionProject;
+    private String pubSubFullSubscriptionPrefix;
+    private String currency;
     private String transactionsTable;
     private String blocksTable;
     private List<String> clickhouseJDBCURIs;
-    private String startTimestamp;
-    private String tigergraphHosts;
+    private String tigergraphHost;
     private String tokensMetadata;
-    private boolean isHotFlow;
+    private String currencyCode;
 
-    public static ChainConfig readChainConfig(String file) {
-        String fileContents = FileUtils.readFile(file, StandardCharsets.UTF_8);
-        ChainConfig result = JsonUtils.parseJson(fileContents, new TypeReference<ChainConfig>() {
-        });
+    public static ChainConfig readChainConfig(PubSubToClickhousePipelineOptions options) throws IllegalAccessException, InstantiationException {
+
+        String commonConfigs = FileUtils.readFile(CONFIGS_PATH +
+                                                          CONFIGS_FILE,
+                                                  StandardCharsets.UTF_8);
+
+        String currencyConfigs = FileUtils.readFile(CONFIGS_PATH +
+                                                            options.getCurrency() + "/" +
+                                                            CONFIGS_FILE,
+                                                    StandardCharsets.UTF_8);
+
+        ChainConfig result = mergeObjects(
+                JsonUtils.parseJson(
+                        commonConfigs, new TypeReference<ChainConfig>() {
+                        }),
+                JsonUtils.parseJson(currencyConfigs, new TypeReference<ChainConfig>() {
+                }));
+
+        result.setPubSubFullSubscriptionPrefix(result.getPubSubSubscriptionProject() +
+                                                       options.getPubSubSubcriptionPrefix().trim());
+
+        result.setCurrency(options.getCurrency());
+        result.setTigergraphHost(options.getTigergraphHost());
+
+        System.out.println(result);
         return result;
     }
 
-    public String getTransformNamePrefix() {
-        return transformNamePrefix;
-    }
+    public String getTransformNamePrefix() { return currencyCode;}
 
-    public String getPubSubSubscriptionPrefix() {
-        return pubSubSubscriptionPrefix;
-    }
-
-    public boolean isHotFlow() {
-        return isHotFlow;
-    }
-
-    public String getStartTimestamp() {
-        return startTimestamp;
+    public String getPubSubSubscriptionProject() {
+        return pubSubSubscriptionProject;
     }
 
     public String getTransactionsTable() {
         return transactionsTable;
     }
 
+    public List<String> getClickhouseJDBCURIs() {
+        return clickhouseJDBCURIs;
+    }
 
-    public List<String> getClickhouseJDBCURIs() { return clickhouseJDBCURIs; }
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
 
     public String getRandomClickhouseJDBCURI() {
         return clickhouseJDBCURIs.get(new Random().nextInt(clickhouseJDBCURIs.size()));
@@ -62,11 +94,39 @@ public class ChainConfig {
         return blocksTable;
     }
 
-    public String[] getTigergraphHosts() {
-        return tigergraphHosts.split(";");
+    public String getTigergraphHost() {
+        return tigergraphHost;
     }
+
+    public void setTigergraphHost(String tigergraphHost) {
+        this.tigergraphHost = tigergraphHost;
+    }
+
+    public String getPubSubFullSubscriptionPrefix() {
+        return pubSubFullSubscriptionPrefix;
+    }
+
+    public void setPubSubFullSubscriptionPrefix(String pubSubFullSubscriptionPrefix) {
+        this.pubSubFullSubscriptionPrefix = pubSubFullSubscriptionPrefix;
+    }
+
+    @Override
+    public String toString() {
+        return "ChainConfig{" +
+                "pubSubSubscriptionProject='" + pubSubSubscriptionProject + '\'' +
+                ", pubSubFullSubscriptionPrefix='" + pubSubFullSubscriptionPrefix + '\'' +
+                ", transactionsTable='" + transactionsTable + '\'' +
+                ", blocksTable='" + blocksTable + '\'' +
+                ", clickhouseJDBCURIs=" + clickhouseJDBCURIs +
+                ", tigergraphHosts='" + tigergraphHost + '\'' +
+                ", tokensMetadata='" + tokensMetadata + '\'' +
+                ", currencyCode='" + currencyCode + '\'' +
+                '}';
+    }
+
 
     public Map<String, Token> getTokensMetadata() {
         return TokensMetadataUtils.parseTokensMetadata(tokensMetadata);
     }
+
 }

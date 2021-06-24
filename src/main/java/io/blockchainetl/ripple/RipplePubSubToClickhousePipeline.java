@@ -17,7 +17,7 @@ public class RipplePubSubToClickhousePipeline {
     }
 
     static void runRipplePipeline(PubSubToClickhousePipelineOptions options) throws Exception {
-        ChainConfig chainConfigs = readChainConfig(options.getChainConfigFile());
+        ChainConfig chainConfigs = readChainConfig(options);
         runPipeline(options, chainConfigs);
     }
 }

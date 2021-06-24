@@ -22,8 +22,6 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.Format;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -42,33 +40,51 @@ public class TransactionsTracesTokensTigerGraphPipeline {
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
             ChainConfig chainConfig,
-            String chain,
+            String currency,
             String currencyCode,
-            String[] tigergraphHosts,
+            String[] tigergraphHost,
             Map<String, Token> tokensMetadata) {
         Pipeline p = Pipeline.create(options);
 
 
-        buildTransactionPipeline(p, options, chainConfig, chain, currencyCode, tigergraphHosts);
-        buildTracesPipeline(p, options, chainConfig, chain, currencyCode, tigergraphHosts);
-        buildTokenTransfersPipeline(p, options, chainConfig, chain, tigergraphHosts, tokensMetadata);
+        buildTransactionPipeline(
+                p,
+                chainConfig.getPubSubSubscriptionProject(),
+                chainConfig.getCurrency(),
+                chainConfig.getCurrencyCode(),
+                chainConfig.getTigergraphHost()
+        );
+
+        buildTracesPipeline(
+                p,
+                chainConfig.getPubSubSubscriptionProject(),
+                chainConfig.getCurrency(),
+                chainConfig.getCurrencyCode(),
+                chainConfig.getTigergraphHost());
+
+        buildTokenTransfersPipeline(
+                p,
+                chainConfig.getPubSubSubscriptionProject(),
+                chainConfig.getCurrency(),
+                chainConfig.getTigergraphHost(),
+                chainConfig.getTokensMetadata());
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
     }
 
     private static void buildTokenTransfersPipeline(Pipeline p,
-                                                    PubSubToClickhousePipelineOptions options,
-                                                    ChainConfig chainConfig,
-                                                    String chain,
-                                                    String[] tigergraphHosts,
-                                                    Map<String, Token> tokensMetadata) {
+                                                    String pubsubSubscription,
+                                                    String currency,
+                                                    String tigergraphHost,
+                                                    Map<String, Token> tokensMetadata
+    ) {
         String transformNameSuffix =
-                StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-token_transfers");
-        Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                StringUtils.capitalizeFirstLetter(currency + "-transactions");
+        String subscription = pubsubSubscription + "transactions";
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "token_transfers"))
+                PubsubIO.readStrings().fromSubscription(subscription + "token_transfers"))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
                     /*
                      * NOTE:
@@ -106,27 +122,27 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                             if (tokensMetadata.containsKey(eachTokenTransfer.getTokenAddress())) {
                                 LOG.info(String.valueOf(TokenPrices.coinPrices));
                                 LOG.info(TokenPrices.get_hourly_price(tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getSymbol()) +
-                                        "tx=" + eachTokenTransfer.getTransactionHash());
+                                                 "tx=" + eachTokenTransfer.getTransactionHash());
                                 linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                                        eachTokenTransfer.getTransactionHash(),
-                                        eachTokenTransfer.getFromAddress(),
-                                        eachTokenTransfer.getToAddress(),
-                                        tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getSymbol(),
-                                        2,
-                                        Double.parseDouble(eachTokenTransfer.getValue())
-                                                / Math.pow(10, tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getDecimals()),
-                                        Double.parseDouble(eachTokenTransfer.getValue())
-                                                / Math.pow(10, tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getDecimals())
-                                                * TokenPrices.get_hourly_price(tokensMetadata.get(
-                                                        eachTokenTransfer.getTokenAddress()).getSymbol()),
-                                        eachTokenTransfer.getBlockDateTime(),
-                                        0,
-                                        0
+                                                              eachTokenTransfer.getTransactionHash(),
+                                                              eachTokenTransfer.getFromAddress(),
+                                                              eachTokenTransfer.getToAddress(),
+                                                              tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getSymbol(),
+                                                              2,
+                                                              Double.parseDouble(eachTokenTransfer.getValue())
+                                                                      / Math.pow(10, tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getDecimals()),
+                                                              Double.parseDouble(eachTokenTransfer.getValue())
+                                                                      / Math.pow(10, tokensMetadata.get(eachTokenTransfer.getTokenAddress()).getDecimals())
+                                                                      * TokenPrices.get_hourly_price(tokensMetadata.get(
+                                                                      eachTokenTransfer.getTokenAddress()).getSymbol()),
+                                                              eachTokenTransfer.getBlockDateTime(),
+                                                              0,
+                                                              0
                                 )).append("\n");
                             }
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
+                        tigerGraphPost(tigergraphHost, currency, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")
@@ -181,29 +197,20 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                 }));
     }
 
-    private static void buildTracesPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig, String chain, String currencyCode, String[] tigergraphHosts) {
+    private static void buildTracesPipeline(Pipeline p,
+                                            String pubsubSubscription,
+                                            String currency,
+                                            String currencyCode,
+                                            String tigergraphHost
+    ) {
 
         String transformNameSuffix =
-                StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-traces");
-        Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                StringUtils.capitalizeFirstLetter(currency + "-transactions");
+        String subscription = pubsubSubscription + "transactions";
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "traces"))
+                PubsubIO.readStrings().fromSubscription(subscription + "traces"))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
-                    /*
-                     * NOTE:
-                     * In order to work with timers, Beam need require input
-                     * to be in (key,value) pairs
-                     *
-                     * This will work but is against distributed principles.
-                     * Beam tries to partition processing across distributed
-                     * workers based on 'keys'. However, we assign an empty
-                     * string as key to all values. Thus, all records will essentially
-                     * be processed on the same worker.
-                     *
-                     * To avoid this, come up with a 'key'
-                     * I cannot do it, since I'm not familiar with the code internals
-                     */
                     @ProcessElement
                     public void processElement(ProcessContext c) {
                         c.output(KV.of(String.valueOf(c.element().hashCode() % 50), c.element()));
@@ -224,21 +231,21 @@ public class TransactionsTracesTokensTigerGraphPipeline {
 
                         for (Trace eachTrace : traces) {
                             linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                                    eachTrace.getTransactionHash(),
-                                    eachTrace.getFromAddress(),
-                                    eachTrace.getToAddress(),
-                                    currencyCode,
-                                    1,
-                                    Double.parseDouble(eachTrace.getValue()) / Math.pow(10, 18),
-                                    Double.parseDouble(eachTrace.getValue()) / Math.pow(10, 18)
-                                            * TokenPrices.get_hourly_price(currencyCode),
-                                    eachTrace.getBlockDateTime(),
-                                    0,
-                                    0
+                                                          eachTrace.getTransactionHash(),
+                                                          eachTrace.getFromAddress(),
+                                                          eachTrace.getToAddress(),
+                                                          currencyCode,
+                                                          1,
+                                                          Double.parseDouble(eachTrace.getValue()) / Math.pow(10, 18),
+                                                          Double.parseDouble(eachTrace.getValue()) / Math.pow(10, 18)
+                                                                  * TokenPrices.get_hourly_price(currencyCode),
+                                                          eachTrace.getBlockDateTime(),
+                                                          0,
+                                                          0
                             )).append("\n");
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
+                        tigerGraphPost(tigergraphHost, currency, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")
@@ -295,32 +302,17 @@ public class TransactionsTracesTokensTigerGraphPipeline {
 
 
     public static void buildTransactionPipeline(Pipeline p,
-                                                PubSubToClickhousePipelineOptions options,
-                                                ChainConfig chainConfig,
-                                                String chain,
+                                                String pubsubSubscription,
+                                                String currency,
                                                 String currencyCode,
-                                                String[] tigergraphHosts) {
+                                                String tigergraphHost) {
         String transformNameSuffix =
-                StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-transactions");
-        Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                StringUtils.capitalizeFirstLetter(currency + "-transactions");
+        String subscription = pubsubSubscription + "transactions";
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "transactions"))
+                PubsubIO.readStrings().fromSubscription(subscription + "transactions"))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
-                    /*
-                     * NOTE:
-                     * In order to work with timers, Beam need require input
-                     * to be in (key,value) pairs
-                     *
-                     * This will work but is against distributed principles.
-                     * Beam tries to partition processing across distributed
-                     * workers based on 'keys'. However, we assign an empty
-                     * string as key to all values. Thus, all records will essentially
-                     * be processed on the same worker.
-                     *
-                     * To avoid this, come up with a 'key'
-                     * I cannot do it, since I'm not familiar with the code internals
-                     */
                     @ProcessElement
                     public void processElement(ProcessContext c) {
                         c.output(KV.of(String.valueOf(c.element().hashCode() % 50), c.element()));
@@ -342,28 +334,28 @@ public class TransactionsTracesTokensTigerGraphPipeline {
 
                         for (Transaction eachTransaction : txns) {
                             linkFlat.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                                    eachTransaction.getHash(),
-                                    eachTransaction.getFromAddress(),
-                                    eachTransaction.getToAddress(),
-                                    currencyCode,
-                                    0,
-                                    Double.parseDouble(eachTransaction.getValue()) / Math.pow(10, 18),
-                                    Double.parseDouble(eachTransaction.getValue()) / Math.pow(10, 18)
-                                            * TokenPrices.get_hourly_price(currencyCode),
-                                    eachTransaction.getBlockDateTime(),
-                                    eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18)),
-                                    eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18))
-                                            * TokenPrices.get_hourly_price(currencyCode)
+                                                          eachTransaction.getHash(),
+                                                          eachTransaction.getFromAddress(),
+                                                          eachTransaction.getToAddress(),
+                                                          currencyCode,
+                                                          0,
+                                                          Double.parseDouble(eachTransaction.getValue()) / Math.pow(10, 18),
+                                                          Double.parseDouble(eachTransaction.getValue()) / Math.pow(10, 18)
+                                                                  * TokenPrices.get_hourly_price(currencyCode),
+                                                          eachTransaction.getBlockDateTime(),
+                                                          eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18)),
+                                                          eachTransaction.getReceiptGasUsed() * (eachTransaction.getGasPrice() / Math.pow(10, 18))
+                                                                  * TokenPrices.get_hourly_price(currencyCode)
                             )).append("\n");
 
-                            chainState.append(String.format("%s,%s,%s", chain,
-                                    eachTransaction.getBlockDateTime(),
-                                    eachTransaction.getBlockNumber())
+                            chainState.append(String.format("%s,%s,%s", currency,
+                                                            eachTransaction.getBlockDateTime(),
+                                                            eachTransaction.getBlockNumber())
                             ).append('\n');
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, chainState.toString(), "streaming_chainstate");
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
+                        tigerGraphPost(tigergraphHost, currency, chainState.toString(), "streaming_chainstate");
+                        tigerGraphPost(tigergraphHost, currency, linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")

@@ -5,6 +5,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 public class JsonUtils {
 
@@ -33,5 +34,19 @@ public class JsonUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static <T> T mergeObjects(T common, T override) throws IllegalAccessException, InstantiationException {
+        Class<?> clazz = common.getClass();
+        Field[] fields = clazz.getDeclaredFields();
+        Object returnValue = clazz.newInstance();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Object value1 = field.get(common);
+            Object value2 = field.get(override);
+            Object value = (value1 != null) ? value1 : value2;
+            field.set(returnValue, value);
+        }
+        return (T) returnValue;
     }
 }

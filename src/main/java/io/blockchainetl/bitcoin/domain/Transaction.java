@@ -133,6 +133,9 @@ public class Transaction implements Serializable {
         return new DateTime(blockTimestamp * 1000);
     }
 
+    public Long getBlockTimestamp() {
+        return blockTimestamp;
+    }
     public int getCoinbase() {
         if (isCoinbase)
             return 1;
@@ -445,5 +448,32 @@ public class Transaction implements Serializable {
         }
 
         return data;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "created_date='" + created_date + '\'' +
+                ", type='" + type + '\'' +
+                ", hash='" + hash + '\'' +
+                ", transactionId='" + transactionId + '\'' +
+                ", size=" + size +
+                ", virtualSize=" + virtualSize +
+                ", version=" + version +
+                ", lockTime=" + lockTime +
+                ", blockNumber=" + blockNumber +
+                ", blockHash='" + blockHash + '\'' +
+                ", blockTimestamp=" + blockTimestamp +
+                ", isCoinbase=" + isCoinbase +
+                ", weight=" + weight +
+                ", inputCount=" + inputCount +
+                ", outputCount=" + outputCount +
+                ", inputValue=" + inputValue +
+                ", outputValue=" + outputValue +
+                ", fee=" + fee +
+                ", coinPriceUSD=" + coinPriceUSD +
+                ", inputs=" + inputs +
+                ", outputs=" + outputs +
+                '}';
     }
 }

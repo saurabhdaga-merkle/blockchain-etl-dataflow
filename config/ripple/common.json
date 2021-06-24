@@ -1,0 +1,5 @@
+{
+  "transactionsTable": "ripple_payments_daily",
+  "blocksTable": "",
+  "currencyCode": "XRP"
+}

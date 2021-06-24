@@ -3,9 +3,9 @@ package io.blockchainetl.ripple;
 import com.google.api.client.util.Lists;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import io.blockchainetl.common.domain.ChainConfig;
-import io.blockchainetl.common.utils.TokenPrices;
 import io.blockchainetl.common.utils.JsonUtils;
 import io.blockchainetl.common.utils.StringUtils;
+import io.blockchainetl.common.utils.TokenPrices;
 import io.blockchainetl.ripple.domain.Payments;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -34,19 +34,12 @@ public class PaymentsTigerGraphPipeline {
 
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
-            ChainConfig chainConfig,
-            String chain,
-            String currencyCode,
-            String[] tigergraphHosts
+            ChainConfig chainConfig
     ) {
         Pipeline p = Pipeline.create(options);
 
         buildTransactionPipeline(p,
-                options,
-                chainConfig,
-                chain,
-                currencyCode,
-                tigergraphHosts
+                chainConfig
         );
 
         PipelineResult pipelineResult = p.run();
@@ -54,17 +47,14 @@ public class PaymentsTigerGraphPipeline {
     }
 
     public static void buildTransactionPipeline(Pipeline p,
-                                                PubSubToClickhousePipelineOptions options,
-                                                ChainConfig chainConfig,
-                                                String chain,
-                                                String currencyCode,
-                                                String[] tigergraphHosts) {
+                                                ChainConfig chainConfig
+    ) {
         String transformNameSuffix =
                 StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-payments");
         Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "payments"))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "payments"))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
 
                     @ProcessElement
@@ -80,7 +70,7 @@ public class PaymentsTigerGraphPipeline {
                     @StateId("count")
                     private final StateSpec<ValueState<Integer>> countState = StateSpecs.value();
                     private final Duration MAX_BUFFER_DURATION = Duration.standardSeconds(1);
-                    @DoFn.TimerId("stale")
+                    @TimerId("stale")
                     private final TimerSpec staleSpec = TimerSpecs.timer(TimeDomain.PROCESSING_TIME);
 
                     private void publishItemsToTG(List<Payments> payments) throws Exception {
@@ -101,31 +91,31 @@ public class PaymentsTigerGraphPipeline {
                                     (eachPayment.getDeliveredAmount()
                                             + eachPayment.getFee())
                                             / Math.pow(10, 6)
-                                            * TokenPrices.get_hourly_price(currencyCode),
+                                            * TokenPrices.get_hourly_price(chainConfig.getCurrencyCode()),
                                     eachPayment.getDeliveredAmount()
                                             / Math.pow(10, 6)
-                                            * TokenPrices.get_hourly_price(currencyCode),
+                                            * TokenPrices.get_hourly_price(chainConfig.getCurrencyCode()),
                                     eachPayment.getFee() / Math.pow(10, 6),
                                     eachPayment.getFee() / Math.pow(10, 6)
-                                            * TokenPrices.get_hourly_price(currencyCode),
+                                            * TokenPrices.get_hourly_price(chainConfig.getCurrencyCode()),
                                     eachPayment.getExecutedTime()));
                             linkFlat.append("\n");
 
-                            chainState.append(String.format("%s,%s,%s", chain,
+                            chainState.append(String.format("%s,%s,%s", chainConfig.getCurrency(),
                                     eachPayment.getExecutedTime(),
                                     eachPayment.getLedgerIndex())
                             ).append('\n');
                         }
 
-                        tigerGraphPost(tigergraphHosts, chain, chainState.toString(), "streaming_chainstate");
-                        tigerGraphPost(tigergraphHosts, chain, linkFlat.toString(), "streaming_address_links_flat");
+                        tigerGraphPost(chainConfig.getTigergraphHost(), chainConfig.getCurrency(), chainState.toString(), "streaming_chainstate");
+                        tigerGraphPost(chainConfig.getTigergraphHost(), chainConfig.getCurrency(), linkFlat.toString(), "streaming_address_links_flat");
 
                     }
 
-                    @DoFn.OnTimer("stale")
+                    @OnTimer("stale")
                     public void onStale(
                             OnTimerContext context,
-                            @DoFn.StateId("buffer") BagState<KV<String, String>> bufferState,
+                            @StateId("buffer") BagState<KV<String, String>> bufferState,
                             @StateId("count") ValueState<Integer> countState) throws Exception {
 
                         List<Payments> fullBatchResults = Lists.newArrayList();

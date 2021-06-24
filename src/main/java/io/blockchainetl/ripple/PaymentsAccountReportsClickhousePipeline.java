@@ -42,7 +42,7 @@ public class PaymentsAccountReportsClickhousePipeline {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-accounts");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "account_reports"))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "account_reports"))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<String, Row>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
@@ -84,7 +84,7 @@ public class PaymentsAccountReportsClickhousePipeline {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-payments");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "payments"))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "payments"))
                 .apply(transformNameSuffix + "-ETL", ParDo.of(new DoFn<String, Row>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {

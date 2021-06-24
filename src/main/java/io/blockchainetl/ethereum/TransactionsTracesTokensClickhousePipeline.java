@@ -33,9 +33,17 @@ public class TransactionsTracesTokensClickhousePipeline {
     ) {
         Pipeline p = Pipeline.create(options);
 
-        buildTransactionPipeline(p, options, chainConfig);
-        buildTracesPipeline(p, options, chainConfig);
-        buildTokenTransfersPipeline(p, options, chainConfig);
+        buildTransactionPipeline(p,
+                                 chainConfig
+        );
+
+        buildTracesPipeline(p,
+                            chainConfig
+        );
+
+        buildTokenTransfersPipeline(p,
+                                    chainConfig
+        );
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
@@ -43,13 +51,13 @@ public class TransactionsTracesTokensClickhousePipeline {
         LOG.info(pipelineResult.toString());
     }
 
-    private static void buildTokenTransfersPipeline(Pipeline tokenTransfers, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
-        String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-token_transfers");
+    private static void buildTokenTransfersPipeline(Pipeline tokenTransfers, ChainConfig chainConfig) {
+        String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getCurrency() + "-token_transfers");
 
         tokenTransfers.apply(transformNameSuffix + "ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "token_transfers").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "token_transfers").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
-                    @DoFn.ProcessElement
+                    @ProcessElement
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         TokenTransfer tokenTransfer = JsonUtils.parseJson(item, TokenTransfer.class);
@@ -77,18 +85,17 @@ public class TransactionsTracesTokensClickhousePipeline {
                         .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
                         .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
                         .withInsertDeduplicate(true)
-                        .withInsertDistributedSync(false));
-
-
+                        .withInsertDistributedSync(false)
+        );
     }
 
-    private static void buildTracesPipeline(Pipeline traces, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    private static void buildTracesPipeline(Pipeline traces, ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-traces");
 
         traces.apply(transformNameSuffix + "ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "traces").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "traces").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
-                    @DoFn.ProcessElement
+                    @ProcessElement
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         Trace traces = JsonUtils.parseJson(item, Trace.class);
@@ -119,13 +126,13 @@ public class TransactionsTracesTokensClickhousePipeline {
                         .withInsertDistributedSync(false));
     }
 
-    public static void buildTransactionPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    public static void buildTransactionPipeline(Pipeline p, ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-transactions");
 
         p.apply(transformNameSuffix + "ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "transactions").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "transactions").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
-                    @DoFn.ProcessElement
+                    @ProcessElement
                     public void processElement(ProcessContext c) {
                         String item = c.element();
                         Transaction transaction = JsonUtils.parseJson(item, Transaction.class);
@@ -154,7 +161,7 @@ public class TransactionsTracesTokensClickhousePipeline {
                         .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
                         .withInitialBackoff(Constants.CH_INITIAL_BACKOFF_SEC)
                         .withInsertDeduplicate(true)
-                        .withInsertDistributedSync(false));
-
+                        .withInsertDistributedSync(false)
+        );
     }
 }

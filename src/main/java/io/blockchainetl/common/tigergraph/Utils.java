@@ -16,55 +16,53 @@ public class Utils {
     private static final Logger LOG =
             LoggerFactory.getLogger(Utils.class);
 
-    public static void tigerGraphPost(String[] tigergraphHosts, String chain, String data, String job) throws Exception {
-        for (int i = 0; i < tigergraphHosts.length; i++) {
-            String url = tigergraphHosts[i] + "/ddl/" +
-                    chain + "?&" +
-                    "tag=" + job + "&" +
-                    "filename=f1&" +
-                    "sep=,&" +
-                    "eol=\\n";
-            try {
-                LOG.info(url);
-                URL obj = new URL(url);
-                HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-                con.setRequestProperty("Content-Type", "application/json");
-                con.setRequestProperty("GSQL-TIMEOUT", "300000");
-                con.setRequestMethod("POST");
-                con.setDoOutput(true);
-                DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-                wr.writeBytes(data);
-                wr.flush();
-                wr.close();
+    public static void tigerGraphPost(String tigergraphHost, String chain, String data, String job) throws Exception {
+        String url = tigergraphHost + "/ddl/" +
+                chain + "?&" +
+                "tag=" + job + "&" +
+                "filename=f1&" +
+                "sep=,&" +
+                "eol=\\n";
+        try {
+            LOG.info(url);
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty("GSQL-TIMEOUT", "300000");
+            con.setRequestMethod("POST");
+            con.setDoOutput(true);
+            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+            wr.writeBytes(data);
+            wr.flush();
+            wr.close();
 
-                BufferedReader iny =
-                        new BufferedReader(new InputStreamReader(con.getInputStream()));
-                String output;
-                StringBuffer response = new StringBuffer();
+            BufferedReader iny =
+                    new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String output;
+            StringBuffer response = new StringBuffer();
 
-                while ((output = iny.readLine()) != null) {
-                    response.append(output);
-                }
-                iny.close();
-                LOG.info(response.toString());
-
-                int responseCode = con.getResponseCode();
-                if (responseCode != 200) {
-                    LOG.info(data);
-                    LOG.info("Response Code : " + responseCode);
-                    LOG.info(response.toString());
-                    throw new Exception("Tigergraph error");
-                }
-            } catch (MalformedURLException e) {
-                LOG.info(e.getMessage());
-                throw e;
-            } catch (IOException e) {
-                LOG.info(e.getMessage());
-                throw e;
-            } catch (Exception e) {
-                LOG.info(e.getMessage());
-                throw e;
+            while ((output = iny.readLine()) != null) {
+                response.append(output);
             }
+            iny.close();
+            LOG.info(response.toString());
+
+            int responseCode = con.getResponseCode();
+            if (responseCode != 200 || response.toString().contains("REST-3000")) {
+                LOG.error(data);
+                LOG.error("Response Code : " + responseCode);
+                LOG.error(response.toString());
+                throw new Exception("Tigergraph error");
+            }
+        } catch (MalformedURLException e) {
+            LOG.error(e.getMessage());
+            throw e;
+        } catch (IOException e) {
+            LOG.error(e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            throw e;
         }
     }
 
@@ -87,9 +85,8 @@ public class Utils {
         LOG.info(response.toString());
         int responseCode = con.getResponseCode();
         if (responseCode != 200) {
-            LOG.info("Response Code : " + responseCode);
-            //printing result from response
-            LOG.info(response.toString());
+            LOG.error("Response Code : " + responseCode);
+            LOG.error(response.toString());
             throw new Exception("Tigergraph error");
         }
         return response.toString();

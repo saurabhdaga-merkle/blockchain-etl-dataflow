@@ -8,7 +8,7 @@ def retrieve_job_id():
     job_prefix = "tigergraph"
     location = 'us-central1'
 
-    logging.info("Looking for jobs with prefix {} in region {}...".format(job_prefix, location))
+    logging.info("Looking for jxxxobs with prefix {} in region {}...".format(job_prefix, location))
 
     try:
         credentials = GoogleCredentials.get_application_default()
@@ -18,10 +18,6 @@ def retrieve_job_id():
             projectId=project,
             location=location,
         ).execute()
-
-
-        #print(result)
-
         for job in result['jobs']:
             if job_prefix in job['name']:
                 job_id = job['id']

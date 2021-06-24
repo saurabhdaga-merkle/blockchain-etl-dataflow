@@ -1,0 +1,8 @@
+{
+  "clickhouseJDBCURIs": [
+    "jdbc:clickhouse://34.66.15.18:8123/streaming?password=mscience123",
+    "jdbc:clickhouse://35.222.77.145:8123/streaming?password=mscience123",
+    "jdbc:clickhouse://34.68.122.170:8123/streaming?password=mscience123"
+  ],
+  "pubSubSubscriptionProject": "projects/staging-btc-etl/subscriptions/"
+}

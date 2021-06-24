@@ -35,8 +35,8 @@ public class TransactionsTracesTokensHotClickhousePipeline {
         Pipeline p = Pipeline.create(options);
 
         buildTransactionPipeline(p, options, chainConfig);
-        buildTracesPipeline(p, options, chainConfig);
-        buildTokenTransfersPipeline(p, options, chainConfig);
+        buildTracesPipeline(p, chainConfig);
+        buildTokenTransfersPipeline(p, chainConfig);
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
@@ -44,11 +44,11 @@ public class TransactionsTracesTokensHotClickhousePipeline {
         LOG.info(pipelineResult.toString());
     }
 
-    private static void buildTokenTransfersPipeline(Pipeline tokenTransfers, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    private static void buildTokenTransfersPipeline(Pipeline tokenTransfers, ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-token_transfers");
 
         tokenTransfers.apply(transformNameSuffix + "ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "token_transfers").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "token_transfers").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
@@ -82,11 +82,12 @@ public class TransactionsTracesTokensHotClickhousePipeline {
                         .withInsertDistributedSync(false));
     }
 
-    private static void buildTracesPipeline(Pipeline traces, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    private static void buildTracesPipeline(Pipeline traces,
+                                            ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-traces");
 
         traces.apply(transformNameSuffix + "ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "traces").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "traces").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
@@ -124,7 +125,7 @@ public class TransactionsTracesTokensHotClickhousePipeline {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-transactions");
 
         p.apply(transformNameSuffix + "ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubSubscriptionPrefix() + "transactions").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
+                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "transactions").withIdAttribute(PUBSUB_ID_ATTRIBUTE))
                 .apply(transformNameSuffix + "ReadFromPubSub", ParDo.of(new DoFn<String, Row>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {

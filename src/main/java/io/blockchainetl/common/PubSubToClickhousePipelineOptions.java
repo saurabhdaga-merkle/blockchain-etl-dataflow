@@ -4,14 +4,19 @@ import org.apache.beam.sdk.options.*;
 
 public interface PubSubToClickhousePipelineOptions extends PipelineOptions, StreamingOptions, SdkHarnessOptions {
 
-    @Description("JSON file containing chain configuration")
+    @Description("currency")
     @Validation.Required
-    String getChainConfigFile();
+    String getCurrency();
 
-    void setChainConfigFile(String value);
+    void setCurrency(String value);
 
-    @Description("Timestamp skew for blocks and transactions, messages older than this will be rejected")
-    Long getAllowedTimestampSkewSeconds();
+    @Description("TigergraphHost")
+    String getTigergraphHost();
 
-    void setAllowedTimestampSkewSeconds(Long allowedTimestampSkewSeconds);
+    void setTigergraphHost(String value);
+
+    @Description("pubSubSubcriptionPrefix")
+    String getPubSubSubcriptionPrefix();
+
+    void setPubSubSubcriptionPrefix(String value);
 }
