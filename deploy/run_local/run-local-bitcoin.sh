@@ -5,5 +5,5 @@ mvn -Pdirect-runner compile exec:java \
   -Dexec.args="--currency=litecoin \
 --tigergraphHost=http://18.116.135.9:9000 \
 --pubSubSubcriptionPrefix=crypto_litecoin_mempool.dataflow.clickhouse.
-  --defaultSdkHarnessLogLevel=DEBUG \
+--allowedTimestampSkewSeconds=36000 \
   --tempLocation=gs://your-bucket/dataflow" -e -X

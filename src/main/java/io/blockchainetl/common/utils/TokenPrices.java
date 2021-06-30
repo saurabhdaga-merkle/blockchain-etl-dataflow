@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class TokenPrices {
-    private static final String CRYPTOCOMPARE_API_KEY = "12e40a21ca4933874e0242bf0fde2b5d1f99304ca431dca5d541f3be03c0ef66";
+    private static final String CRYPTOCOMPARE_API_KEY = "9ae5eb1139823033fa6b465f00083ab1fe64aa8768f68cd28a07033d20a25405";
 
     private static final Boolean DAILY_PRICING = false;
 

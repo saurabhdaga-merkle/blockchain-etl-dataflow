@@ -39,17 +39,14 @@ public class TransactionsTracesTokensTigerGraphPipeline {
 
     public static void runPipeline(
             PubSubToClickhousePipelineOptions options,
-            ChainConfig chainConfig,
-            String currency,
-            String currencyCode,
-            String[] tigergraphHost,
-            Map<String, Token> tokensMetadata) {
+            ChainConfig chainConfig
+    ) {
         Pipeline p = Pipeline.create(options);
 
 
         buildTransactionPipeline(
                 p,
-                chainConfig.getPubSubSubscriptionProject(),
+                chainConfig.getPubSubFullSubscriptionPrefix(),
                 chainConfig.getCurrency(),
                 chainConfig.getCurrencyCode(),
                 chainConfig.getTigergraphHost()
@@ -57,14 +54,14 @@ public class TransactionsTracesTokensTigerGraphPipeline {
 
         buildTracesPipeline(
                 p,
-                chainConfig.getPubSubSubscriptionProject(),
+                chainConfig.getPubSubFullSubscriptionPrefix(),
                 chainConfig.getCurrency(),
                 chainConfig.getCurrencyCode(),
                 chainConfig.getTigergraphHost());
 
         buildTokenTransfersPipeline(
                 p,
-                chainConfig.getPubSubSubscriptionProject(),
+                chainConfig.getPubSubFullSubscriptionPrefix(),
                 chainConfig.getCurrency(),
                 chainConfig.getTigergraphHost(),
                 chainConfig.getTokensMetadata());
@@ -80,11 +77,11 @@ public class TransactionsTracesTokensTigerGraphPipeline {
                                                     Map<String, Token> tokensMetadata
     ) {
         String transformNameSuffix =
-                StringUtils.capitalizeFirstLetter(currency + "-transactions");
-        String subscription = pubsubSubscription + "transactions";
+                StringUtils.capitalizeFirstLetter(currency + "-token-transfers");
+        String subscription = pubsubSubscription + "token_transfers";
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(subscription + "token_transfers"))
+                PubsubIO.readStrings().fromSubscription(subscription))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
                     /*
                      * NOTE:
@@ -205,11 +202,11 @@ public class TransactionsTracesTokensTigerGraphPipeline {
     ) {
 
         String transformNameSuffix =
-                StringUtils.capitalizeFirstLetter(currency + "-transactions");
-        String subscription = pubsubSubscription + "transactions";
+                StringUtils.capitalizeFirstLetter(currency + "-traces");
+        String subscription = pubsubSubscription + "traces";
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(subscription + "traces"))
+                PubsubIO.readStrings().fromSubscription(subscription))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {
@@ -311,7 +308,7 @@ public class TransactionsTracesTokensTigerGraphPipeline {
         String subscription = pubsubSubscription + "transactions";
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(subscription + "transactions"))
+                PubsubIO.readStrings().fromSubscription(subscription))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
                     @ProcessElement
                     public void processElement(ProcessContext c) {

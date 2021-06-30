@@ -74,7 +74,7 @@ public class TransactionsTracesTokensHotClickhousePipeline {
                 })).setRowSchema(Schemas.MASTER_HOT).apply(
                 ClickHouseIO.<Row>write(
                         chainConfig.getRandomClickhouseJDBCURI(),
-                        chainConfig.getTransactionsTable())
+                        chainConfig.getTransactionsTableHot())
                         .withMaxRetries(Constants.CH_MAX_RETRIES)
                         .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
                         .withInitialBackoff(Duration.standardSeconds(1))
@@ -113,7 +113,7 @@ public class TransactionsTracesTokensHotClickhousePipeline {
                 })).setRowSchema(Schemas.MASTER_HOT).apply(
                 ClickHouseIO.<Row>write(
                         chainConfig.getRandomClickhouseJDBCURI(),
-                        chainConfig.getTransactionsTable())
+                        chainConfig.getTransactionsTableHot())
                         .withMaxRetries(Constants.CH_MAX_RETRIES)
                         .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
                         .withInitialBackoff(Duration.standardSeconds(1))
@@ -152,7 +152,7 @@ public class TransactionsTracesTokensHotClickhousePipeline {
                 })).setRowSchema(Schemas.MASTER_HOT).apply(
                 ClickHouseIO.<Row>write(
                         chainConfig.getRandomClickhouseJDBCURI(),
-                        chainConfig.getTransactionsTable())
+                        chainConfig.getTransactionsTableHot())
                         .withMaxRetries(Constants.CH_MAX_RETRIES)
                         .withMaxInsertBlockSize(Constants.CH_MAX_INSERT_BLOCK_SIZE)
                         .withInitialBackoff(Duration.standardSeconds(1))

@@ -4,7 +4,7 @@ package io.blockchainetl.ethereum;
 import io.blockchainetl.common.PubSubToClickhousePipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 
-import static io.blockchainetl.bitcoin.TransactionsBlocksTigerGraphPipeline.runPipeline;
+import static io.blockchainetl.ethereum.TransactionsTracesTokensTigerGraphPipeline.runPipeline;
 import static io.blockchainetl.common.domain.ChainConfig.readChainConfig;
 
 public class EthereumHotPubSubToTigerGraphPipeline {

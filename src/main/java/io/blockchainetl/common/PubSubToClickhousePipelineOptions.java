@@ -19,4 +19,10 @@ public interface PubSubToClickhousePipelineOptions extends PipelineOptions, Stre
     String getPubSubSubcriptionPrefix();
 
     void setPubSubSubcriptionPrefix(String value);
+
+    @Description("Timestamp skew for blocks and transactions, messages older than this will be rejected")
+    @Validation.Required
+    Long getAllowedTimestampSkewSeconds();
+
+    void setAllowedTimestampSkewSeconds(Long allowedTimestampSkewSeconds);
 }

@@ -19,8 +19,6 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.Format;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 import static io.blockchainetl.common.tigergraph.Utils.tigerGraphPost;
@@ -38,8 +36,11 @@ public class PaymentsTigerGraphPipeline {
     ) {
         Pipeline p = Pipeline.create(options);
 
-        buildTransactionPipeline(p,
-                chainConfig
+        buildTransactionPipeline(
+                p,
+                chainConfig.getCurrencyCode(),
+                chainConfig.getPubSubFullSubscriptionPrefix(),
+                chainConfig.getTigergraphHost()
         );
 
         PipelineResult pipelineResult = p.run();
@@ -47,14 +48,15 @@ public class PaymentsTigerGraphPipeline {
     }
 
     public static void buildTransactionPipeline(Pipeline p,
-                                                ChainConfig chainConfig
+                                                String currencyCode,
+                                                String pubSubPrefix,
+                                                String tigergraphHost
     ) {
         String transformNameSuffix =
-                StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-payments");
-        Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                StringUtils.capitalizeFirstLetter(currencyCode + "-payments");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
-                PubsubIO.readStrings().fromSubscription(chainConfig.getPubSubFullSubscriptionPrefix() + "payments"))
+                PubsubIO.readStrings().fromSubscription(pubSubPrefix + "payments"))
                 .apply(transformNameSuffix + "-PartitioningToKV", ParDo.of(new DoFn<String, KV<String, String>>() {
 
                     @ProcessElement
@@ -91,25 +93,24 @@ public class PaymentsTigerGraphPipeline {
                                     (eachPayment.getDeliveredAmount()
                                             + eachPayment.getFee())
                                             / Math.pow(10, 6)
-                                            * TokenPrices.get_hourly_price(chainConfig.getCurrencyCode()),
+                                            * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getDeliveredAmount()
                                             / Math.pow(10, 6)
-                                            * TokenPrices.get_hourly_price(chainConfig.getCurrencyCode()),
+                                            * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getFee() / Math.pow(10, 6),
                                     eachPayment.getFee() / Math.pow(10, 6)
-                                            * TokenPrices.get_hourly_price(chainConfig.getCurrencyCode()),
+                                            * TokenPrices.get_hourly_price(currencyCode),
                                     eachPayment.getExecutedTime()));
                             linkFlat.append("\n");
 
-                            chainState.append(String.format("%s,%s,%s", chainConfig.getCurrency(),
+                            chainState.append(String.format("%s,%s,%s", "ripple",
                                     eachPayment.getExecutedTime(),
                                     eachPayment.getLedgerIndex())
                             ).append('\n');
                         }
 
-                        tigerGraphPost(chainConfig.getTigergraphHost(), chainConfig.getCurrency(), chainState.toString(), "streaming_chainstate");
-                        tigerGraphPost(chainConfig.getTigergraphHost(), chainConfig.getCurrency(), linkFlat.toString(), "streaming_address_links_flat");
-
+                        tigerGraphPost(tigergraphHost, "ripple", chainState.toString(), "streaming_chainstate");
+                        tigerGraphPost(tigergraphHost, "ripple", linkFlat.toString(), "streaming_address_links_flat");
                     }
 
                     @OnTimer("stale")

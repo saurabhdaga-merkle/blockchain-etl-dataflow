@@ -1,13 +1,16 @@
-import argparse, logging, re
+import sys, argparse, logging, re
+import readline
+import shlex
 from googleapiclient.discovery import build
 from oauth2client.client import GoogleCredentials
 
 
-def retrieve_job_id():
+def retrieve_job_id(job_prefix):
     project = 'staging-btc-etl'
-    job_prefix = "tigergraph"
+    job_prefix = job_prefix
     location = 'us-central1'
 
+    commands = []
     logging.info("Looking for jxxxobs with prefix {} in region {}...".format(job_prefix, location))
 
     try:
@@ -18,11 +21,21 @@ def retrieve_job_id():
             projectId=project,
             location=location,
         ).execute()
+        print(job_prefix)
         for job in result['jobs']:
-            if job_prefix in job['name']:
+            if job['name'].find(job_prefix) != -1 and (
+                    ('DRAINED') not in job['currentState'].find('DRAINED') == 0 or
+                    ('CANCELLED') not in job['currentState']
+            ):
                 job_id = job['id']
-                #print(job['name'])
-                print("gcloud dataflow jobs drain --region us-central1 " + job_id)
+                print(f"Are you sure you want to drain this - Drain {job}?(Y/N)")
+                cmd = shlex.split(input('> '))
+                print(cmd)
+                if (cmd[0].lower() == "y"):
+                    commands.append("gcloud dataflow jobs drain --region us-central1 " + job_id)
+
+        for item in commands:
+            print(item)
 
     except Exception as e:
         logging.info("Error retrieving Job ID")
@@ -46,4 +59,4 @@ def run(argv=None):
 
 
 if __name__ == '__main__':
-    retrieve_job_id()
+    retrieve_job_id(sys.argv[1])

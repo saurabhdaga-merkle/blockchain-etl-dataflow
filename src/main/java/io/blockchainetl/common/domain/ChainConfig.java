@@ -25,8 +25,8 @@ public class ChainConfig {
     private String pubSubSubscriptionProject;
     private String pubSubFullSubscriptionPrefix;
     private String currency;
+    private String transactionsTableHot;
     private String transactionsTable;
-    private String blocksTable;
     private List<String> clickhouseJDBCURIs;
     private String tigergraphHost;
     private String tokensMetadata;
@@ -90,9 +90,11 @@ public class ChainConfig {
         return clickhouseJDBCURIs.get(new Random().nextInt(clickhouseJDBCURIs.size()));
     }
 
-    public String getBlocksTable() {
-        return blocksTable;
+
+    public String getTransactionsTableHot() {
+        return transactionsTableHot;
     }
+
 
     public String getTigergraphHost() {
         return tigergraphHost;
@@ -110,23 +112,23 @@ public class ChainConfig {
         this.pubSubFullSubscriptionPrefix = pubSubFullSubscriptionPrefix;
     }
 
-    @Override
-    public String toString() {
-        return "ChainConfig{" +
-                "pubSubSubscriptionProject='" + pubSubSubscriptionProject + '\'' +
-                ", pubSubFullSubscriptionPrefix='" + pubSubFullSubscriptionPrefix + '\'' +
-                ", transactionsTable='" + transactionsTable + '\'' +
-                ", blocksTable='" + blocksTable + '\'' +
-                ", clickhouseJDBCURIs=" + clickhouseJDBCURIs +
-                ", tigergraphHosts='" + tigergraphHost + '\'' +
-                ", tokensMetadata='" + tokensMetadata + '\'' +
-                ", currencyCode='" + currencyCode + '\'' +
-                '}';
-    }
-
 
     public Map<String, Token> getTokensMetadata() {
         return TokensMetadataUtils.parseTokensMetadata(tokensMetadata);
     }
 
+    @Override
+    public String toString() {
+        return "ChainConfig{" +
+                "pubSubSubscriptionProject='" + pubSubSubscriptionProject + '\'' +
+                ", pubSubFullSubscriptionPrefix='" + pubSubFullSubscriptionPrefix + '\'' +
+                ", currency='" + currency + '\'' +
+                ", transactionsTableHot='" + transactionsTableHot + '\'' +
+                ", transactionsTable='" + transactionsTable + '\'' +
+                ", clickhouseJDBCURIs=" + clickhouseJDBCURIs +
+                ", tigergraphHost='" + tigergraphHost + '\'' +
+                ", tokensMetadata='" + tokensMetadata + '\'' +
+                ", currencyCode='" + currencyCode + '\'' +
+                '}';
+    }
 }

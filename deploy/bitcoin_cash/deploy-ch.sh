@@ -2,13 +2,14 @@
 
 mvn -e -Pdataflow-runner compile exec:java \
   -Dexec.mainClass=io.blockchainetl.bitcoin.PubSubToClickhousePipeline \
-  -Dexec.args="--chainConfigFile=chainConfigBitcoinCash.json \
---allowedTimestampSkewSeconds=1000 \
---gcpTempLocation=gs://blockchain-etl-streaming/bitcoin-cash-etl/dataflow \
---tempLocation=gs:///blockchain-etl-streaming/bitcoin-cash-etl/dataflow \
+  -Dexec.args="--currency=bitcoin_cash \
+--pubSubSubcriptionPrefix=crypto_bitcoin_cash.dataflow.clickhouse. \
+--allowedTimestampSkewSeconds=36000 \
+--gcpTempLocation=gs://blockchain-etl-streaming/bitcoin_cash-etl/dataflow \
+--tempLocation=gs:///blockchain-etl-streaming/bitcoin_cash-etl/dataflow \
 --project=staging-btc-etl \
 --runner=DataflowRunner \
---jobName=clickhouse-bitcoin-cash-prod-1238 \
+--jobName=clickhouse-bch-prod-06-28 \
 --workerMachineType=n1-standard-1 \
 --numWorkers=1 \
 --maxNumWorkers=1 \
@@ -16,3 +17,22 @@ mvn -e -Pdataflow-runner compile exec:java \
 --region=us-central1 \
 --zone=us-central1-a \
 "
+
+mvn -e -Pdataflow-runner compile exec:java \
+  -Dexec.mainClass=io.blockchainetl.bitcoin.PubSubToClickhouse0LagPipeline \
+  -Dexec.args="--currency=bitcoin_cash \
+--pubSubSubcriptionPrefix=crypto_bitcoin_cash_0_lag.dataflow.clickhouse. \
+--allowedTimestampSkewSeconds=36000 \
+--gcpTempLocation=gs://blockchain-etl-streaming/bitcoin_cash-etl/dataflow \
+--tempLocation=gs:///blockchain-etl-streaming/bitcoin_cash-etl/dataflow \
+--project=staging-btc-etl \
+--runner=DataflowRunner \
+--jobName=clickhouse-bch-0-lag-prod-06-28 \
+--workerMachineType=n1-standard-1 \
+--numWorkers=1 \
+--maxNumWorkers=1 \
+--diskSizeGb=30 \
+--region=us-central1 \
+--zone=us-central1-b \
+"
+

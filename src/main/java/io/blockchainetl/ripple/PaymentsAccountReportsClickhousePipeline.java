@@ -31,14 +31,15 @@ public class PaymentsAccountReportsClickhousePipeline {
     ) throws Exception {
         Pipeline p = Pipeline.create(options);
 
-        buildPaymentsPipeline(p, options, chainConfig);
-        buildAccountReportsPipeline(p, options, chainConfig);
+        buildPaymentsPipeline(p, chainConfig);
+        buildAccountReportsPipeline(p, chainConfig);
 
         PipelineResult pipelineResult = p.run();
         LOG.info(pipelineResult.toString());
     }
 
-    private static void buildAccountReportsPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    private static void buildAccountReportsPipeline(Pipeline p,
+                                                    ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-accounts");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
@@ -80,7 +81,8 @@ public class PaymentsAccountReportsClickhousePipeline {
     }
 
 
-    public static void buildPaymentsPipeline(Pipeline p, PubSubToClickhousePipelineOptions options, ChainConfig chainConfig) {
+    public static void buildPaymentsPipeline(Pipeline p,
+                                             ChainConfig chainConfig) {
         String transformNameSuffix = StringUtils.capitalizeFirstLetter(chainConfig.getTransformNamePrefix() + "-payments");
 
         p.apply(transformNameSuffix + "-ReadFromPubSub",
